@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { mockIPC, clearMocks } from "@tauri-apps/api/mocks";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { clearMocks, mockIPC } from "@tauri-apps/api/mocks";
 
 describe("hero catalog-service fetchHeroCatalog", () => {
   beforeEach(() => {
@@ -23,10 +23,17 @@ describe("hero catalog-service fetchHeroCatalog", () => {
   });
 
   it("fetches via dispatchAction when not cached", async () => {
-    const mockCatalog = { id: "movie:popular", items: [{ id: "tt2", name: "FromCore" }, { id: "tt3", name: "B" }] };
+    const mockCatalog = {
+      id: "movie:popular",
+      items: [{ id: "tt2", name: "FromCore" }, { id: "tt3", name: "B" }],
+    };
     mockIPC((cmd) => {
       if (cmd === "dispatch_action") {
-        return { type: "NewState", catalog: mockCatalog, state: { catalogs: [mockCatalog] } };
+        return {
+          type: "NewState",
+          catalog: mockCatalog,
+          state: { catalogs: [mockCatalog] },
+        };
       }
     });
 
@@ -44,10 +51,13 @@ describe("hero catalog-service fetchHeroCatalog", () => {
       if (cmd === "dispatch_action") throw new Error("core down");
     });
     const fakeItems = [{ id: "tt-proxy", name: "Proxy Item" }];
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ metas: fakeItems }),
-    } as Response)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ metas: fakeItems }),
+      } as Response)),
+    );
 
     const { fetchHeroCatalog } = await import("./catalog-service");
     const result = await fetchHeroCatalog("series");
@@ -55,19 +65,25 @@ describe("hero catalog-service fetchHeroCatalog", () => {
   });
 
   it("fetchDailyAnime returns [] on fetch failure", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => {
-      throw new Error("network");
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("network");
+      }),
+    );
     const { fetchDailyAnime } = await import("./catalog-service");
     await expect(fetchDailyAnime()).resolves.toEqual([]);
   });
 
   it("fetchDailyAnime returns sliced data on success", async () => {
     const fakeData = Array.from({ length: 25 }, (_, i) => ({ id: `${i}` }));
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ data: fakeData }),
-    } as Response)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ data: fakeData }),
+      } as Response)),
+    );
     const { fetchDailyAnime } = await import("./catalog-service");
     const result = await fetchDailyAnime();
     expect(result).toHaveLength(20); // HERO_LIMITS.anime

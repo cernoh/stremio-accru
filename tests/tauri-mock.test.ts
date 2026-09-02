@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi, beforeAll } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { randomFillSync } from "crypto";
-import { mockIPC, mockWindows, clearMocks } from "@tauri-apps/api/mocks";
+import { clearMocks, mockIPC, mockWindows } from "@tauri-apps/api/mocks";
 import { invoke } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -34,7 +34,9 @@ describe("tauri mockIPC — @tauri-apps/api/mocks (docs pattern)", () => {
       }
     });
     // @ts-ignore Tauri internals mocked by mockIPC
-    const internals = window.__TAURI_INTERNALS__ as unknown as { invoke: typeof invoke };
+    const internals = window.__TAURI_INTERNALS__ as unknown as {
+      invoke: typeof invoke;
+    };
     const spy = vi.spyOn(internals, "invoke");
     await expect(invoke("add", { a: 5, b: 7 })).resolves.toBe(12);
     expect(spy).toHaveBeenCalled();
@@ -47,7 +49,10 @@ describe("tauri mockIPC — @tauri-apps/api/mocks (docs pattern)", () => {
         if (action?.type === "LoadCatalog") {
           return {
             type: "NewState",
-            catalog: { id: "movie:popular", items: [{ id: "tt1", name: "Mock Movie" }] },
+            catalog: {
+              id: "movie:popular",
+              items: [{ id: "tt1", name: "Mock Movie" }],
+            },
             state: { catalogs: [{ id: "movie:popular" }], addons: [] },
           };
         }
@@ -68,7 +73,12 @@ describe("tauri mockIPC — @tauri-apps/api/mocks (docs pattern)", () => {
     const state = (await invoke("get_state")) as { catalogs: unknown[] };
     expect(state.catalogs).toHaveLength(1);
 
-    await expect(invoke("load", { url: "https://example.com/video.mp4", opts: { url: "https://example.com/video.mp4" } })).resolves.toBeNull();
+    await expect(
+      invoke("load", {
+        url: "https://example.com/video.mp4",
+        opts: { url: "https://example.com/video.mp4" },
+      }),
+    ).resolves.toBeNull();
   });
 
   it("mockIPC can simulate error", async () => {

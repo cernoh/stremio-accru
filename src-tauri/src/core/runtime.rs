@@ -210,11 +210,16 @@ mod tests {
     fn dispatch_install_addon() {
         let rt = CoreRuntime::new();
         let before = rt.get_state()["addons"].as_array().unwrap().len();
-        let res = rt.dispatch(json!({"type":"InstallAddon","url":"https://example.com/manifest.json"}));
+        let res =
+            rt.dispatch(json!({"type":"InstallAddon","url":"https://example.com/manifest.json"}));
         assert_eq!(res["type"], "NewState");
         let after = rt.get_state()["addons"].as_array().unwrap().len();
         assert_eq!(after, before + 1);
-        assert!(rt.get_state()["addons"].as_array().unwrap().iter().any(|a| a["url"] == "https://example.com/manifest.json"));
+        assert!(rt.get_state()["addons"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|a| a["url"] == "https://example.com/manifest.json"));
     }
 
     #[test]

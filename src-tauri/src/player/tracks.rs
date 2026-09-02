@@ -70,7 +70,13 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    fn mk_track(lang: &str, kind: &str, forced: bool, external: bool, title: &str) -> serde_json::Value {
+    fn mk_track(
+        lang: &str,
+        kind: &str,
+        forced: bool,
+        external: bool,
+        title: &str,
+    ) -> serde_json::Value {
         json!({ "lang": lang, "type": kind, "forced": forced, "external": external, "title": title })
     }
 
@@ -80,7 +86,10 @@ mod tests {
             mk_track("en", "audio", false, false, "English"),
             mk_track("ja", "audio", false, false, "Japanese"),
         ];
-        let prefs = TrackPrefs { audio_lang: "ja".into(), ..Default::default() };
+        let prefs = TrackPrefs {
+            audio_lang: "ja".into(),
+            ..Default::default()
+        };
         let best = select_best(&tracks, &prefs, "audio").unwrap();
         assert_eq!(best["lang"], "ja");
     }
@@ -91,7 +100,11 @@ mod tests {
             mk_track("en", "audio", false, false, "English"),
             mk_track("en", "audio", true, false, "English Forced"),
         ];
-        let prefs = TrackPrefs { audio_lang: "en".into(), forced_override: true, ..Default::default() };
+        let prefs = TrackPrefs {
+            audio_lang: "en".into(),
+            forced_override: true,
+            ..Default::default()
+        };
         let best = select_best(&tracks, &prefs, "audio").unwrap();
         assert_eq!(best["forced"], true);
     }
@@ -113,7 +126,10 @@ mod tests {
             mk_track("en", "audio", false, false, "English"),
             mk_track("fr", "audio", false, false, "French"),
         ];
-        let prefs = TrackPrefs { reject_langs: vec!["en".into()], ..Default::default() };
+        let prefs = TrackPrefs {
+            reject_langs: vec!["en".into()],
+            ..Default::default()
+        };
         let best = select_best(&tracks, &prefs, "audio").unwrap();
         assert_eq!(best["lang"], "fr");
     }
@@ -137,7 +153,10 @@ mod tests {
         ];
         let prefs = TrackPrefs::default();
         assert!(select_best(&tracks, &prefs, "video").is_none());
-        assert_eq!(select_best(&tracks, &prefs, "audio").unwrap()["type"], "audio");
+        assert_eq!(
+            select_best(&tracks, &prefs, "audio").unwrap()["type"],
+            "audio"
+        );
     }
 
     #[test]
@@ -162,7 +181,10 @@ mod tests {
             ..Default::default()
         };
         let best = select_best(&tracks, &prefs, "subs").unwrap();
-        assert_eq!(best["lang"], "ja", "subs selection must use subs_lang, not audio_lang");
+        assert_eq!(
+            best["lang"], "ja",
+            "subs selection must use subs_lang, not audio_lang"
+        );
     }
 
     #[test]

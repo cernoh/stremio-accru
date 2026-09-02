@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { getCached, setCached, isStale } from "./cache";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getCached, isStale, setCached } from "./cache";
 import { PROGRESSIVE_DAYS_LIMIT } from "./config";
 
 describe("hero cache", () => {

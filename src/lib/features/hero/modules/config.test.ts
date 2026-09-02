@@ -1,5 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { ROTATION_INTERVAL, PROGRESSIVE_DAYS_LIMIT, HERO_LIMITS, getMovieCatalogUrl, getSeriesCatalogUrl, SOURCES } from "./config";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  getMovieCatalogUrl,
+  getSeriesCatalogUrl,
+  HERO_LIMITS,
+  PROGRESSIVE_DAYS_LIMIT,
+  ROTATION_INTERVAL,
+  SOURCES,
+} from "./config";
 
 describe("hero config", () => {
   beforeEach(() => localStorage.clear());
@@ -13,7 +20,9 @@ describe("hero config", () => {
   });
 
   it("has 4 known sources", () => {
-    expect(Object.keys(SOURCES)).toEqual(expect.arrayContaining(["snoak", "cinemeta", "mdblist", "jikan"]));
+    expect(Object.keys(SOURCES)).toEqual(
+      expect.arrayContaining(["snoak", "cinemeta", "mdblist", "jikan"]),
+    );
   });
 
   it("defaults to cinemeta when no localStorage", () => {
@@ -23,7 +32,9 @@ describe("hero config", () => {
 
   it("respects hero-movie-source localStorage", () => {
     localStorage.setItem("hero-movie-source", "snoak");
-    expect(getMovieCatalogUrl()).toBe("https://snoak.example/movie/trending.json");
+    expect(getMovieCatalogUrl()).toBe(
+      "https://snoak.example/movie/trending.json",
+    );
     localStorage.setItem("hero-movie-source", "jikan");
     expect(getMovieCatalogUrl()).toBe("https://api.jikan.moe/v4/schedules");
   });
@@ -35,7 +46,10 @@ describe("hero config", () => {
 
   it("mdblist returns custom url when hero-mdblist-custom set", () => {
     localStorage.setItem("hero-movie-source", "mdblist");
-    localStorage.setItem("hero-mdblist-custom", "https://custom.example/list.json");
+    localStorage.setItem(
+      "hero-mdblist-custom",
+      "https://custom.example/list.json",
+    );
     expect(getMovieCatalogUrl()).toBe("https://custom.example/list.json");
   });
 
@@ -48,7 +62,9 @@ describe("hero config", () => {
 
   it("series url respects its own source key", () => {
     localStorage.setItem("hero-series-source", "snoak");
-    expect(getSeriesCatalogUrl()).toBe("https://snoak.example/series/trending.json");
+    expect(getSeriesCatalogUrl()).toBe(
+      "https://snoak.example/series/trending.json",
+    );
     // movie source shouldn't affect series when series source not set? movie is separate key
     localStorage.setItem("hero-movie-source", "jikan");
     localStorage.setItem("hero-series-source", "cinemeta");
