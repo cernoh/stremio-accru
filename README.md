@@ -3,7 +3,12 @@
 Platform-agnostic Stremio-Kai — Windows, macOS, Linux, Android, iOS. Single
 codebase, MPV everywhere, zero-config portability.
 
-> **Status:** M0–M5 implemented on `main` (`04372e2` — 2026-09-02). Skeleton, Player (trait + desktop/mobile + mock), Core/Streaming (mock runtime), UI (Hero/Metadata/Hidden Nav/OLED), Presets/Automation (HDR/Anime4K/SVP/Skip/Tracks/Thumbs), and Settings/Portability + Wizard all merged; CI green. See [`docs/PLAN.md`](docs/PLAN.md) for architecture, research, and milestones.
+> **Status:** M0–M5 implemented on `main` (`04372e2` — 2026-09-02). Skeleton,
+> Player (trait + desktop/mobile + mock), Core/Streaming (mock runtime), UI
+> (Hero/Metadata/Hidden Nav/OLED), Presets/Automation
+> (HDR/Anime4K/SVP/Skip/Tracks/Thumbs), and Settings/Portability + Wizard all
+> merged; CI green. See [`docs/PLAN.md`](docs/PLAN.md) for architecture,
+> research, and milestones.
 
 ## Stack
 

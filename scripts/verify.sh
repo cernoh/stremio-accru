@@ -22,24 +22,29 @@ run() {
   fi
 }
 
-step "1/6 cargo check (src-tauri)"
+step "1/8 cargo check (src-tauri)"
 run "cargo check" cargo check --manifest-path src-tauri/Cargo.toml
 
-step "2/6 cargo test (42 Rust unit tests — player/skip/tracks/hdr/svp/thumbs/state/backend + core/runtime + config/portable)"
+step "2/8 cargo test (44 Rust unit tests — player/skip/tracks/hdr/svp/thumbs/state/backend + core/runtime + config/portable)"
 run "cargo test" cargo test --manifest-path src-tauri/Cargo.toml
 
-step "3/6 svelte-kit sync (generate .svelte-kit/tsconfig.json)"
+step "3/8 svelte-kit sync (generate .svelte-kit/tsconfig.json)"
 run "svelte-kit sync" npx svelte-kit sync
 
-step "4/6 frontend build (vite)"
+step "4/8 frontend build (vite)"
 run "vite build" npm run build
 
-step "5/6 svelte-check (type)"
+step "5/8 svelte-check (type)"
 run "svelte-check" npm run check
 
-step "6/6 vitest (27 frontend tests — hero config/cache/catalog + tauri mocks mockIPC/mockWindows/events)"
+step "6/8 vitest (27 frontend tests — hero config/cache/catalog + tauri mocks mockIPC/mockWindows/events)"
 run "vitest" npx vitest run
 
+step "7/8 deno fmt --check (CI gate)"
+run "deno fmt --check" deno fmt --check
+
+step "8/8 deno lint (CI gate, tests/ is linted — ban-ts-comment needs description)"
+run "deno lint" deno lint
 echo ""
 echo "═══════════════════════════════════════"
 echo "Passed: $pass / $((pass+fail)) — Failed: $fail"

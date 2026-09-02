@@ -25,7 +25,6 @@ describe("tauri mockIPC — @tauri-apps/api/mocks (docs pattern)", () => {
     });
     await expect(invoke("add", { a: 12, b: 15 })).resolves.toBe(27);
   });
-
   it("spy on invoke via vi.spyOn", async () => {
     mockIPC((cmd, args) => {
       if (cmd === "add") {
@@ -33,7 +32,8 @@ describe("tauri mockIPC — @tauri-apps/api/mocks (docs pattern)", () => {
         return typed.a + typed.b;
       }
     });
-    // @ts-ignore Tauri internals mocked by mockIPC
+    // @ts-ignore: Tauri internals mocked by mockIPC
+    // deno-lint-ignore no-window -- jsdom window required for Tauri mock internals
     const internals = window.__TAURI_INTERNALS__ as unknown as {
       invoke: typeof invoke;
     };

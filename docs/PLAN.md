@@ -3,7 +3,10 @@
 > Goal: replicate Stremio-Kai's premium experience (portable MPV, automation,
 > modern UI) on **Windows, macOS, Linux, Android, iOS** from a single codebase.
 
-Date: 2026-09-02 | Status: Implemented — M0–M5 merged to `main` @ `04372e2` (CI green). See README for current head. | Sources: `stremio-linux-shell` (GTK4+WebKitGTK+libmpv Rust), `stremio-core` (Rust Elm-arch), `Stremio-Kai` (Zaarrg/community-v5 overlay, `portable_config/`)
+Date: 2026-09-02 | Status: Implemented — M0–M5 merged to `main` @ `04372e2` (CI
+green). See README for current head. | Sources: `stremio-linux-shell`
+(GTK4+WebKitGTK+libmpv Rust), `stremio-core` (Rust Elm-arch), `Stremio-Kai`
+(Zaarrg/community-v5 overlay, `portable_config/`)
 
 ## 1. Research Synthesis
 
