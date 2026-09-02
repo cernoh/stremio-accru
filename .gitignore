@@ -35,3 +35,4 @@ result-*
 *.log
 LOG.txt
 npm-debug.log*
+src-tauri/gen/

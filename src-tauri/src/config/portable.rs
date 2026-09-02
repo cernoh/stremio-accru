@@ -23,7 +23,7 @@ pub fn is_portable(app: &AppHandle) -> bool {
     false
 }
 
-pub fn data_dir(app: &AppHandle, portable: bool) -> anyhow::Result<PathBuf> {
+pub fn data_dir(_app: &AppHandle, portable: bool) -> anyhow::Result<PathBuf> {
     if portable {
         if let Ok(exe) = std::env::current_exe() {
             if let Some(dir) = exe.parent() {

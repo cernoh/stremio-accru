@@ -22,11 +22,9 @@ dirs = "6"
 anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = "0.3"
-# stremio-core — pin to development; added in PR #2
-# stremio-core = { git = "https://github.com/Stremio/stremio-core", branch = "development" }
-# libmpv2 — desktop only; gated via cfg in player module
-# libmpv2 = { version = "5.0", optional = true }
+parking_lot = "0.12"
+async-trait = "0.1"
 
 [features]
 default = []
-desktop-player = ["dep:libmpv2"]
+desktop-player = []
