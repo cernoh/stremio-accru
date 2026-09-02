@@ -10,14 +10,10 @@
     "tauri:dev": "cargo tauri dev",
     "tauri:build": "cargo tauri build"
   },
-  "fmt": {
-    "useTabs": false,
-    "lineWidth": 100,
-    "singleQuote": false
-  },
   "lint": {
     "rules": {
       "tags": ["recommended"]
-    }
+    },
+    "exclude": ["src/"]
   }
 }
