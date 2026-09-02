@@ -26,6 +26,11 @@ cache/
 .env
 .env.local
 
+# Nix / direnv
+.direnv/
+result
+result-*
+
 # Logs
 *.log
 LOG.txt
