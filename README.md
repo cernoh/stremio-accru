@@ -8,7 +8,7 @@ Platform-agnostic Stremio-Kai — Windows, macOS, Linux, Android, iOS. Single co
 
 - **Shell:** [Tauri v2](https://tauri.app) (Rust backend + WebView frontend)
 - **Core:** [`stremio-core`](https://github.com/Stremio/stremio-core) (Rust `Env` impl) + `stremio-core-web` WASM fallback
-- **Frontend:** SvelteKit + Vite + TypeScript
+- **Frontend:** SvelteKit + Vite + TypeScript via **Deno** (primary) — `deno.json` tasks with `npm:` specifiers; `package.json` retained for npm interop
 - **Player:** `libmpv2` on desktop (`gpu-next`, GLSL shaders), mobile `libmpv` NDK / `mpvkit` / native fallback, abstracted via `PlayerBackend` trait
 
 ## Key Features (ported from Kai)
@@ -28,22 +28,25 @@ All settings in UI, instant apply, first-time wizard. See `docs/PLAN.md` §2.5 f
 ### Nix (recommended on NixOS)
 
 ```bash
-direnv allow        # or: nix develop
-npm install
-npm run tauri dev      # desktop
+direnv allow        # or: nix develop   # provides rust, deno, node, tauri deps
+deno task dev            # frontend (vite via deno)
+deno task tauri dev      # desktop (or: deno task tauri:dev)
 cargo check --manifest-path src-tauri/Cargo.toml
 ```
 
-The flake (`flake.nix`) provides Rust stable (+ `wasm32-unknown-unknown`), `cargo-tauri`, Node 20, and Tauri Linux deps (webkitgtk 4.1, libsoup 3, gtk3, mpv, appimagekit). `WEBKIT_DISABLE_DMABUF_RENDERER=1` is set for NixOS webkit.
+The flake (`flake.nix`) provides Rust stable (+ `wasm32-unknown-unknown`), `cargo-tauri`, **Deno 2** (primary) + Node 22, and Tauri Linux deps (webkitgtk 4.1, libsoup 3, gtk3, mpv). `WEBKIT_DISABLE_DMABUF_RENDERER=1` is set for NixOS webkit. Web tooling uses **Deno** (`deno.json` tasks) with `npm:` specifiers; `package.json` remains for npm interop.
 
 ### Non-Nix
 
 ```bash
-# prerequisites: Rust stable, Node 20+, Tauri deps (https://tauri.app/start/prerequisites/)
-npm install
-npm run tauri dev      # desktop
-npm run tauri android dev
-npm run tauri ios dev
+# prerequisites: Rust stable, Deno 2+, Tauri deps (https://tauri.app/start/prerequisites/)
+deno task dev
+deno task tauri dev
+# mobile
+deno task tauri android dev
+deno task tauri ios dev
+# npm fallback still works
+npm install && npm run tauri dev
 ```
 
 Portable mode: place `portable_config/` next to binary (or set `ACCRU_PORTABLE=1`). See `portable_config/README.md`.
@@ -57,6 +60,8 @@ portable_config/  # MPV + scripts + shaders compat (relative paths)
 resources/        # Tauri bundle resources
 docs/PLAN.md      # Architecture & research
 .github/          # CI, issue/PR templates
+deno.json         # Deno tasks (primary)
+package.json      # npm interop fallback
 ```
 
 ## Research Sources

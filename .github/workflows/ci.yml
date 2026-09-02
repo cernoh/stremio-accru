@@ -14,7 +14,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --manifest-path src-tauri/Cargo.toml
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
-      - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm }
-      - run: npm ci --ignore-scripts || npm install
-      - run: npm run build
+      - uses: denoland/setup-deno@v2
+        with: { deno-version: v2.x }
+      - run: deno task build

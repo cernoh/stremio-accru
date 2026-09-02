@@ -49,6 +49,7 @@
             rustToolchain
             rust-analyzer
             cargo-tauri
+            deno
             nodejs_22
             pkg-config
             openssl
@@ -56,9 +57,11 @@
           ] ++ tauriDeps ++ darwinDeps;
 
           shellHook = ''
-            echo "Stremio Accru dev shell — $(rustc --version), node $(node --version), npm $(npm --version)"
+            echo "Stremio Accru dev shell — $(rustc --version), deno $(deno --version | head -n1), node $(node --version), npm $(npm --version)"
             echo "  nix develop              # enter shell"
-            echo "  npm install && npm run tauri dev   # desktop"
+            echo "  deno task dev            # frontend dev (vite via deno)"
+            echo "  deno task build          # frontend build"
+            echo "  deno task tauri dev      # tauri desktop"
             echo "  cargo check --manifest-path src-tauri/Cargo.toml"
             export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig:${pkgs.webkitgtk_4_1.dev}/lib/pkgconfig:''${PKG_CONFIG_PATH:-}"
           '';

@@ -27,18 +27,11 @@ Date: 2026-09-02 | Status: Draft v1 | Sources: `stremio-linux-shell` (GTK4+WebKi
 
 ## 2. Architecture Decision
 
-### 2.1 Stack Choice — Tauri v2 + Rust + TypeScript
-
-| Option | Desktop | Mobile | MPV | Verdict |
-|---|---|---|---|---|
-| Tauri v2 | ✅ Win/Mac/Linux (WebView) | ✅ Android/iOS (via `tauri-mobile`, WebView) | ✅ `libmpv2` Rust crate desktop; mobile via `libmpv` NDK / `mpvkit` iOS | **Chosen** |
-| Electron | ✅ | ❌ (needs Capacitor) | ✅ | Heavier, no mobile core |
-| Flutter | ✅ | ✅ | ❌ (no first-class MPV) | Rewrite UI |
-
-**Chosen: Tauri v2** — single Rust backend can host `stremio-core` natively (best perf, shared types) + `libmpv2` on desktop, with mobile `player` abstraction fallback. Frontend in **SvelteKit or Solid + Vite** (reuse/extend `stremio-web` components if needed, but clean rewrite preferred). WASM fallback (`stremio-core-web`) available if we need web-sim parity.
-
 #### Why not fork `stremio-linux-shell`?
 Too coupled to GTK/WebKitGTK/libepoxy/Flatpak. Tauri gives platform abstraction + updater + bundler + portable mode for free.
+
+**Frontend via Deno:** Vite/SvelteKit run with **Deno 2** as primary (`deno.json` tasks, `npm:` specifiers, `nodeModulesDir:auto`, `unstable byonm` for Tauri interop). `package.json` retained for npm fallback/CI. CI and Tauri `beforeDevCommand` use `deno task dev/build`.
+
 
 ### 2.2 High-Level Layers
 
