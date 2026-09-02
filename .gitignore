@@ -36,3 +36,8 @@ result-*
 LOG.txt
 npm-debug.log*
 src-tauri/gen/
+
+# Vendored mpv (Windows) — mirrors stremio-shell-ng libmpv-2_{x64,arm64}.zip + mpv-{x64,arm64}/
+# Fetch from https://github.com/Stremio/stremio-shell-ng/releases or build from mpv.io
+src-tauri/libmpv-2_*.zip
+src-tauri/mpv-*/

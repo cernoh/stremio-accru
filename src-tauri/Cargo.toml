@@ -10,6 +10,7 @@ rust-version = "1.77"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+zip-extract = { version = "0.2", optional = true }
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
@@ -24,7 +25,13 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 parking_lot = "0.12"
 async-trait = "0.1"
+flume = "0.11"
+# libmpv2 stack — mirrors stremio-shell-ng (libmpv2 6.x + sys 4.x) and stremio-linux-shell (libmpv2 5.x)
+# Enabled via `desktop-player` (desktop targets with system mpv or Windows vendored DLL)
+libmpv2 = { version = "6", optional = true }
+raw-window-handle = { version = "0.6", optional = true }
 
 [features]
 default = []
-desktop-player = []
+zip-extract = ["dep:zip-extract"]
+desktop-player = ["dep:libmpv2", "dep:raw-window-handle", "zip-extract"]
