@@ -25,6 +25,19 @@ All settings in UI, instant apply, first-time wizard. See `docs/PLAN.md` §2.5 f
 
 ## Quick Start
 
+### Nix (recommended on NixOS)
+
+```bash
+direnv allow        # or: nix develop
+npm install
+npm run tauri dev      # desktop
+cargo check --manifest-path src-tauri/Cargo.toml
+```
+
+The flake (`flake.nix`) provides Rust stable (+ `wasm32-unknown-unknown`), `cargo-tauri`, Node 20, and Tauri Linux deps (webkitgtk 4.1, libsoup 3, gtk3, mpv, appimagekit). `WEBKIT_DISABLE_DMABUF_RENDERER=1` is set for NixOS webkit.
+
+### Non-Nix
+
 ```bash
 # prerequisites: Rust stable, Node 20+, Tauri deps (https://tauri.app/start/prerequisites/)
 npm install
