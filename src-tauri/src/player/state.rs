@@ -26,8 +26,14 @@ impl PlayerState {
 
     pub fn emit_property(&self, app: &AppHandle, key: &str, val: Value) {
         self.set(key, val.clone());
-        let _ = app.emit("player:property-changed", serde_json::json!({ "key": key, "value": val }));
-        let _ = app.emit("property-changed", serde_json::json!({ "name": key, "value": val }));
+        let _ = app.emit(
+            "player:property-changed",
+            serde_json::json!({ "key": key, "value": val }),
+        );
+        let _ = app.emit(
+            "property-changed",
+            serde_json::json!({ "name": key, "value": val }),
+        );
     }
 
     pub fn emit_time_pos(&self, app: &AppHandle, pos: f64) {
@@ -35,7 +41,10 @@ impl PlayerState {
     }
 
     pub fn emit_playback_ended(&self, app: &AppHandle, reason: &str) {
-        let _ = app.emit("player:playback-ended", serde_json::json!({ "reason": reason }));
+        let _ = app.emit(
+            "player:playback-ended",
+            serde_json::json!({ "reason": reason }),
+        );
         let _ = app.emit("playback-ended", reason.to_string());
     }
 }

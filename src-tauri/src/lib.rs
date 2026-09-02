@@ -19,6 +19,9 @@ pub fn run() {
             let backend = player::PlayerBackendState::new(handle.clone(), player_state.clone());
             app.manage(player_state);
             app.manage(Mutex::new(backend));
+            // Core runtime (mock Elm, real stremio-core in future)
+            let core_state = core::init_core(handle.clone());
+            app.manage(core_state);
             tauri::async_runtime::spawn(async move {
                 if let Err(e) = config::init(&handle).await {
                     tracing::error!("config init failed: {e:#}");

@@ -114,7 +114,10 @@ impl PlayerBackend for DesktopPlayer {
             }
             _ => {}
         }
-        let _ = self.app.emit("player:command", serde_json::json!({ "cmd": cmd, "args": args }));
+        let _ = self.app.emit(
+            "player:command",
+            serde_json::json!({ "cmd": cmd, "args": args }),
+        );
         Ok(())
     }
 
@@ -128,8 +131,10 @@ impl PlayerBackend for DesktopPlayer {
             Anime4KPreset::HQ => "~~/shaders/Anime4K_Clamp_Highlights.glsl:~~/shaders/Anime4K_Restore_CNN_M.glsl:~~/shaders/Anime4K_Upscale_CNN_x2_M.glsl",
             Anime4KPreset::Off => "",
         };
-        self.state.set("glsl-shaders", Value::String(list.to_string()));
-        self.state.emit_property(&self.app, "glsl-shaders", Value::String(list.to_string()));
+        self.state
+            .set("glsl-shaders", Value::String(list.to_string()));
+        self.state
+            .emit_property(&self.app, "glsl-shaders", Value::String(list.to_string()));
         Ok(())
     }
 
@@ -145,7 +150,11 @@ impl PlayerBackend for DesktopPlayer {
         self.state.set("brightness", Value::from(brightness));
         self.state.set("saturation", Value::from(saturation));
         self.state.set("gamma", Value::from(gamma));
-        self.state.emit_property(&self.app, "visual-profile", Value::String(format!("{profile:?}")));
+        self.state.emit_property(
+            &self.app,
+            "visual-profile",
+            Value::String(format!("{profile:?}")),
+        );
         Ok(())
     }
 
@@ -154,11 +163,14 @@ impl PlayerBackend for DesktopPlayer {
         tracing::info!(target: "player", "DesktopPlayer::set_audio_preset {preset:?}");
         let af = match preset {
             AudioPreset::Off => "",
-            AudioPreset::Night => "lavfi=[highpass=f=120,lowpass=f=10000,equalizer=f=2000:width_type=o:width=2:g=6]",
+            AudioPreset::Night => {
+                "lavfi=[highpass=f=120,lowpass=f=10000,equalizer=f=2000:width_type=o:width=2:g=6]"
+            }
             AudioPreset::Voice => "lavfi=[highpass=f=80,equalizer=f=2000:g=8,equalizer=f=4000:g=6]",
         };
         self.state.set("af", Value::String(af.to_string()));
-        self.state.emit_property(&self.app, "af", Value::String(af.to_string()));
+        self.state
+            .emit_property(&self.app, "af", Value::String(af.to_string()));
         Ok(())
     }
 }
