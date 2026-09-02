@@ -34,3 +34,37 @@ pub fn apply_tonemapping(state: &PlayerState, app: &AppHandle) -> Result<()> {
     state.emit_property(app, "tone-mapping", Value::String("bt.2446a".into()));
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn is_hdr_bt2020() {
+        assert!(is_hdr(&json!({"primaries":"bt.2020"})));
+    }
+
+    #[test]
+    fn is_hdr_smpte2084() {
+        assert!(is_hdr(&json!({"gamma":"smpte2084"})));
+        assert!(is_hdr(&json!({"gamma":"bt.2020-pq"})));
+    }
+
+    #[test]
+    fn is_hdr_hlg() {
+        assert!(is_hdr(&json!({"gamma":"hlg"})));
+    }
+
+    #[test]
+    fn not_hdr_sdr() {
+        assert!(!is_hdr(&json!({"primaries":"bt.709","gamma":"bt.1886"})));
+        assert!(!is_hdr(&json!({})));
+        assert!(!is_hdr(&json!({"primaries":"unknown","gamma":"unknown"})));
+    }
+
+    #[test]
+    fn pq_substring() {
+        assert!(is_hdr(&json!({"gamma":"something-pq-whatever"})));
+    }
+}

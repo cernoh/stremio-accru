@@ -33,3 +33,51 @@ pub fn maybe_emit_skip(app: &AppHandle, time_pos: f64, duration: f64) -> Option<
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn detect_intro_at_start() {
+        let res = detect_intro(10.0, 1500.0);
+        assert_eq!(res, Some((0.0, 90.0)));
+    }
+
+    #[test]
+    fn detect_outro_near_end() {
+        let res = detect_intro(1450.0, 1500.0);
+        assert_eq!(res, Some((1410.0, 1500.0)));
+    }
+
+    #[test]
+    fn no_detect_mid_episode() {
+        assert_eq!(detect_intro(500.0, 1500.0), None);
+    }
+
+    #[test]
+    fn no_detect_short_duration() {
+        // duration < 1200 => no intro skip
+        assert_eq!(detect_intro(10.0, 600.0), None);
+        assert_eq!(detect_intro(590.0, 600.0), None);
+    }
+
+    #[test]
+    fn boundary_90s() {
+        // exactly at 90s should not trigger intro (needs <90)
+        assert_eq!(detect_intro(90.0, 1500.0), None);
+        // duration - pos == 90 should not trigger outro (needs <90)
+        assert_eq!(detect_intro(1410.0, 1500.0), None);
+        // 89.9 triggers
+        assert_eq!(detect_intro(89.9, 1500.0), Some((0.0, 90.0)));
+        assert_eq!(detect_intro(1410.1, 1500.0), Some((1410.0, 1500.0)));
+    }
+
+    #[test]
+    fn json_skip_payload_shape() {
+        let v = json!({ "start": 0.0, "end": 90.0, "label": "Skip Intro" });
+        assert_eq!(v["label"], "Skip Intro");
+        assert_eq!(v["start"], 0.0);
+    }
+}

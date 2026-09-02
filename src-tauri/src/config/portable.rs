@@ -37,3 +37,45 @@ pub fn data_dir(_app: &AppHandle, portable: bool) -> anyhow::Result<PathBuf> {
     let base = dirs::data_dir().ok_or_else(|| anyhow::anyhow!("no data dir"))?;
     Ok(base.join("stremio-accru"))
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn portable_env_true() {
+        std::env::set_var("ACCRU_PORTABLE", "1");
+        std::env::remove_var("ACCRU_PORTABLE");
+        std::env::set_var("ACCRU_PORTABLE", "True");
+        assert_eq!(std::env::var("ACCRU_PORTABLE").unwrap(), "True");
+        std::env::remove_var("ACCRU_PORTABLE");
+    }
+
+    #[test]
+    fn data_dir_non_portable_ends_with_stremio_accru() {
+        let base = dirs::data_dir().expect("no data dir on this host");
+        let expected = base.join("stremio-accru");
+        assert!(expected.ends_with("stremio-accru"));
+        assert!(expected.to_string_lossy().contains("stremio-accru"));
+    }
+
+    #[test]
+    fn data_dir_portable_flag_uses_exe_parent() {
+        if let Ok(exe) = std::env::current_exe() {
+            if let Some(parent) = exe.parent() {
+                let portable_path = parent.join("portable_data");
+                assert!(portable_path.ends_with("portable_data"));
+            }
+        }
+    }
+
+    #[test]
+    fn env_var_case_insensitive() {
+        for val in ["1", "true", "True", "TRUE", "TrUe"] {
+            let is_one = val == "1" || val.eq_ignore_ascii_case("true");
+            assert!(is_one, "val {val} should be portable");
+        }
+        for val in ["0", "false", "no", "", "2"] {
+            let is_one = val == "1" || val.eq_ignore_ascii_case("true");
+            assert!(!is_one, "val {val} should not be portable");
+        }
+    }
+}

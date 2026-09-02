@@ -135,3 +135,105 @@ impl CoreRuntime {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn new_has_sample_catalogs() {
+        let rt = CoreRuntime::new();
+        let state = rt.get_state();
+        let catalogs = state["catalogs"].as_array().unwrap();
+        assert_eq!(catalogs.len(), 2);
+        let ids: Vec<_> = catalogs.iter().map(|c| c["id"].as_str().unwrap()).collect();
+        assert!(ids.contains(&"movie:popular"));
+        assert!(ids.contains(&"series:popular"));
+    }
+
+    #[test]
+    fn get_state_contains_ctx_and_addons() {
+        let rt = CoreRuntime::new();
+        let state = rt.get_state();
+        assert!(state.get("ctx").is_some());
+        assert!(state.get("addons").is_some());
+        let addons = state["addons"].as_array().unwrap();
+        assert!(addons.iter().any(|a| a["id"] == "com.linvo.cinemeta"));
+    }
+
+    #[test]
+    fn dispatch_load_catalog_known() {
+        let rt = CoreRuntime::new();
+        let res = rt.dispatch(json!({"type":"LoadCatalog","id":"movie:popular"}));
+        assert_eq!(res["type"], "NewState");
+        assert_eq!(res["catalog"]["id"], "movie:popular");
+        assert!(res["catalog"]["items"].as_array().unwrap().len() >= 2);
+    }
+
+    #[test]
+    fn dispatch_load_catalog_unknown_returns_empty() {
+        let rt = CoreRuntime::new();
+        let res = rt.dispatch(json!({"type":"LoadCatalog","id":"unknown:catalog"}));
+        assert_eq!(res["type"], "NewState");
+        assert_eq!(res["catalog"]["id"], "unknown:catalog");
+        assert_eq!(res["catalog"]["items"].as_array().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn dispatch_load_catalog_default_id() {
+        let rt = CoreRuntime::new();
+        let res = rt.dispatch(json!({"type":"LoadCatalog"}));
+        assert_eq!(res["catalog"]["id"], "movie:popular");
+    }
+
+    #[test]
+    fn dispatch_get_meta() {
+        let rt = CoreRuntime::new();
+        let res = rt.dispatch(json!({"type":"GetMeta","id":"tt0133093"}));
+        assert_eq!(res["type"], "NewState");
+        assert_eq!(res["meta"]["id"], "tt0133093");
+        assert_eq!(res["meta"]["cast"][0]["name"], "Keanu Reeves");
+    }
+
+    #[test]
+    fn dispatch_resolve_stream() {
+        let rt = CoreRuntime::new();
+        let res = rt.dispatch(json!({"type":"ResolveStream","id":"tt999"}));
+        assert_eq!(res["type"], "CoreEvent");
+        assert_eq!(res["event"], "StreamResolved");
+        assert!(res["stream"]["url"].as_str().unwrap().contains("tt999"));
+        assert!(res["stream"]["url"].as_str().unwrap().ends_with(".mp4"));
+    }
+
+    #[test]
+    fn dispatch_install_addon() {
+        let rt = CoreRuntime::new();
+        let before = rt.get_state()["addons"].as_array().unwrap().len();
+        let res = rt.dispatch(json!({"type":"InstallAddon","url":"https://example.com/manifest.json"}));
+        assert_eq!(res["type"], "NewState");
+        let after = rt.get_state()["addons"].as_array().unwrap().len();
+        assert_eq!(after, before + 1);
+        assert!(rt.get_state()["addons"].as_array().unwrap().iter().any(|a| a["url"] == "https://example.com/manifest.json"));
+    }
+
+    #[test]
+    fn dispatch_unknown_returns_new_state() {
+        let rt = CoreRuntime::new();
+        let res = rt.dispatch(json!({"type":"UnknownAction"}));
+        assert_eq!(res["type"], "NewState");
+        assert!(res.get("state").is_some());
+    }
+
+    #[test]
+    fn sample_catalog_items_shape() {
+        let rt = CoreRuntime::new();
+        let res = rt.dispatch(json!({"type":"LoadCatalog","id":"movie:popular"}));
+        let items = res["catalog"]["items"].as_array().unwrap();
+        for item in items {
+            assert!(item.get("id").is_some());
+            assert!(item.get("name").is_some());
+            assert!(item.get("type").is_some());
+        }
+    }
+}

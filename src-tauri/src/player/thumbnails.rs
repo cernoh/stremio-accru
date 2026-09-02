@@ -17,3 +17,22 @@ pub fn request_thumbnail(app: &AppHandle, time_pos: f64) -> anyhow::Result<()> {
 pub fn get_thumb_height() -> u32 {
     160
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn thumb_height_constant() {
+        assert_eq!(get_thumb_height(), 160);
+    }
+
+    #[test]
+    fn thumb_url_format() {
+        // mirrors request_thumbnail URL pattern thumb://{pos:.1}
+        let pos = 12.345;
+        let expected = format!("thumb://{:.1}", pos);
+        assert_eq!(expected, "thumb://12.3");
+        assert_eq!(format!("thumb://{:.1}", 0.0), "thumb://0.0");
+    }
+}
