@@ -1,0 +1,15 @@
+:root {
+  --primary-background-color: #0c0b11;
+  --secondary-background-color: #1a173e;
+}
+[data-oled="true"] {
+  --primary-background-color: #000000;
+  --secondary-background-color: #000000;
+  background: #000 !important;
+}
+.oled-toggle {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 100;
+}
