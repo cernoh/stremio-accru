@@ -2,6 +2,7 @@ pub mod config;
 pub mod core;
 pub mod player;
 
+use parking_lot::Mutex;
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -13,6 +14,11 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let handle = app.handle().clone();
+            // Player state + backend (desktop vs mobile)
+            let player_state = player::init_state(&handle);
+            let backend = player::PlayerBackendState::new(handle.clone(), player_state.clone());
+            app.manage(player_state);
+            app.manage(Mutex::new(backend));
             tauri::async_runtime::spawn(async move {
                 if let Err(e) = config::init(&handle).await {
                     tracing::error!("config init failed: {e:#}");
@@ -25,6 +31,10 @@ pub fn run() {
             player::set_property,
             player::observe,
             player::command,
+            player::set_shader_preset,
+            player::set_visual_profile,
+            player::set_audio_preset,
+            player::get_current_url,
             core::dispatch_action,
             core::get_state,
             config::get_portable_mode,
