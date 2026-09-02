@@ -2,17 +2,20 @@ fn main() {
     // Tauri codegen always
     tauri_build::build();
 
-    // ── MPV vendoring (Windows) — mirrors stremio-shell-ng/build.rs ──────────
+    // ── MPV vendoring (Windows-only) — mirrors stremio-shell-ng/build.rs ─────
     // shell-ng extracts libmpv-2_x64.zip / libmpv-2_arm64.zip at build time and
     // pushes /LIBPATH:.\mpv-x64 (so rustc links mpv.lib). Accru reuses the same
-    // layout but keeps it optional: if the zip is absent we emit a warning and
-    // fall back to system/pkg-config lookup (Linux/macOS) or user-provided DLL.
+    // layout but scopes it to Windows MSVC only:
+    //   • Windows MSVC: extract libmpv-2.dll + mpv.lib, add LIBPATH, ship DLL
+    //     via bundle.resources (see tauri.conf.json).
+    //   • Linux/macOS: rely on system libmpv via libmpv2-sys pkg-config
+    //     (`cargo:rustc-link-lib=mpv` → libmpv.so/dylib from flake.nix pkgs.mpv
+    //     or libmpv-dev on CI). No zip/.lib step.
     // Place archives at:
     //   src-tauri/libmpv-2_x64.zip  (+ libmpv-2_arm64.zip for aarch64)
     // which expand to src-tauri/mpv-x64/{mpv.lib,mpv.def,mpv.exp} etc.
     // Fetch helper: https://github.com/Stremio/stremio-shell-ng/releases (assets)
     // or build from https://mpv.io/ + libmpv-2.dll.
-
     let target = std::env::var("TARGET").unwrap_or_default();
     let is_windows_msvc = target.contains("windows") && target.contains("msvc");
 
@@ -62,7 +65,10 @@ fn main() {
     let archive_bytes = match std::fs::read(&archive_path) {
         Ok(b) => b,
         Err(e) => {
-            println!("cargo:warning=stremio-accru: failed to read {}: {e}", archive_path.display());
+            println!(
+                "cargo:warning=stremio-accru: failed to read {}: {e}",
+                archive_path.display()
+            );
             return;
         }
     };
@@ -74,7 +80,10 @@ fn main() {
         if let Err(e) = zip_extract::extract(cursor, &manifest_dir, true) {
             println!("cargo:warning=stremio-accru: zip extract failed for {archive_name}: {e}");
         } else {
-            println!("cargo:warning=stremio-accru: extracted {archive_name} → {}", manifest_dir.display());
+            println!(
+                "cargo:warning=stremio-accru: extracted {archive_name} → {}",
+                manifest_dir.display()
+            );
         }
     }
     #[cfg(not(feature = "zip-extract"))]

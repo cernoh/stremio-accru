@@ -249,9 +249,9 @@ fn event_loop(client: libmpv2::Mpv, app: AppHandle, state: Arc<PlayerState>) {
                     }
                     PropertyData::Flag(v) => Value::Bool(v),
                     PropertyData::Int64(v) => Value::from(v),
-                    PropertyData::Double(v) => {
-                        serde_json::Number::from_f64(v).map(Value::Number).unwrap_or(Value::Null)
-                    }
+                    PropertyData::Double(v) => serde_json::Number::from_f64(v)
+                        .map(Value::Number)
+                        .unwrap_or(Value::Null),
                     _ => continue,
                 };
                 state.emit_property(&app, name, val);
@@ -361,8 +361,10 @@ impl PlayerBackend for DesktopPlayer {
             Anime4KPreset::HQ => "~~/shaders/Anime4K_Clamp_Highlights.glsl:~~/shaders/Anime4K_Restore_CNN_M.glsl:~~/shaders/Anime4K_Upscale_CNN_x2_M.glsl",
             Anime4KPreset::Off => "",
         };
-        self.state.set("glsl-shaders", Value::String(list.to_string()));
-        self.state.emit_property(&self.app, "glsl-shaders", Value::String(list.to_string()));
+        self.state
+            .set("glsl-shaders", Value::String(list.to_string()));
+        self.state
+            .emit_property(&self.app, "glsl-shaders", Value::String(list.to_string()));
         Ok(())
     }
 
@@ -378,7 +380,11 @@ impl PlayerBackend for DesktopPlayer {
         self.state.set("brightness", Value::from(brightness));
         self.state.set("saturation", Value::from(saturation));
         self.state.set("gamma", Value::from(gamma));
-        self.state.emit_property(&self.app, "visual-profile", Value::String(format!("{profile:?}")));
+        self.state.emit_property(
+            &self.app,
+            "visual-profile",
+            Value::String(format!("{profile:?}")),
+        );
         Ok(())
     }
 
@@ -387,11 +393,14 @@ impl PlayerBackend for DesktopPlayer {
         tracing::info!(target: "player", "DesktopPlayer::set_audio_preset (mock) {preset:?}");
         let af = match preset {
             AudioPreset::Off => "",
-            AudioPreset::Night => "lavfi=[highpass=f=120,lowpass=f=10000,equalizer=f=2000:width_type=o:width=2:g=6]",
+            AudioPreset::Night => {
+                "lavfi=[highpass=f=120,lowpass=f=10000,equalizer=f=2000:width_type=o:width=2:g=6]"
+            }
             AudioPreset::Voice => "lavfi=[highpass=f=80,equalizer=f=2000:g=8,equalizer=f=4000:g=6]",
         };
         self.state.set("af", Value::String(af.to_string()));
-        self.state.emit_property(&self.app, "af", Value::String(af.to_string()));
+        self.state
+            .emit_property(&self.app, "af", Value::String(af.to_string()));
         Ok(())
     }
 }
@@ -420,19 +429,26 @@ impl PlayerBackend for DesktopPlayer {
         tracing::info!(target: "player", "DesktopPlayer::set_property {key}={val}");
         let res: Result<()> = self.with_mpv(|mpv| {
             match &val {
-                Value::Bool(b) => mpv.set_property(key, *b).map_err(|e| anyhow::anyhow!("{e}"))?,
+                Value::Bool(b) => mpv
+                    .set_property(key, *b)
+                    .map_err(|e| anyhow::anyhow!("{e}"))?,
                 Value::Number(n) => {
                     if let Some(f) = n.as_f64() {
-                        mpv.set_property(key, f).map_err(|e| anyhow::anyhow!("{e}"))?;
+                        mpv.set_property(key, f)
+                            .map_err(|e| anyhow::anyhow!("{e}"))?;
                     } else if let Some(i) = n.as_i64() {
-                        mpv.set_property(key, i).map_err(|e| anyhow::anyhow!("{e}"))?;
+                        mpv.set_property(key, i)
+                            .map_err(|e| anyhow::anyhow!("{e}"))?;
                     }
                 }
-                Value::String(s) => mpv.set_property(key, s.as_str()).map_err(|e| anyhow::anyhow!("{e}"))?,
+                Value::String(s) => mpv
+                    .set_property(key, s.as_str())
+                    .map_err(|e| anyhow::anyhow!("{e}"))?,
                 _ => {
                     // Complex JSON -> serialize as string (e.g. video-params)
                     let s = val.to_string();
-                    mpv.set_property(key, s.as_str()).map_err(|e| anyhow::anyhow!("{e}"))?;
+                    mpv.set_property(key, s.as_str())
+                        .map_err(|e| anyhow::anyhow!("{e}"))?;
                 }
             }
             Ok(())
@@ -530,7 +546,9 @@ impl PlayerBackend for DesktopPlayer {
         tracing::info!(target: "player", "DesktopPlayer::set_audio_preset {preset:?}");
         let af = match preset {
             AudioPreset::Off => "",
-            AudioPreset::Night => "lavfi=[highpass=f=120,lowpass=f=10000,equalizer=f=2000:width_type=o:width=2:g=6]",
+            AudioPreset::Night => {
+                "lavfi=[highpass=f=120,lowpass=f=10000,equalizer=f=2000:width_type=o:width=2:g=6]"
+            }
             AudioPreset::Voice => "lavfi=[highpass=f=80,equalizer=f=2000:g=8,equalizer=f=4000:g=6]",
         };
         self.set_property("af", Value::String(af.to_string()))?;
