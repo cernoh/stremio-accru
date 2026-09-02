@@ -44,3 +44,26 @@ pub trait PlayerBackend: Send + Sync {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn anime4k_preset_eq() {
+        assert_eq!(Anime4KPreset::Optimized, Anime4KPreset::Optimized);
+        assert_ne!(Anime4KPreset::Off, Anime4KPreset::HQ);
+    }
+
+    #[test]
+    fn visual_profile_eq() {
+        assert_eq!(VisualProfile::Kai, VisualProfile::Kai);
+        assert_ne!(VisualProfile::Vivid, VisualProfile::Original);
+    }
+
+    #[test]
+    fn audio_preset_eq() {
+        assert_eq!(AudioPreset::Night, AudioPreset::Night);
+        assert_ne!(AudioPreset::Off, AudioPreset::Voice);
+    }
+}

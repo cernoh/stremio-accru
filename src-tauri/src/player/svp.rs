@@ -31,3 +31,14 @@ pub fn set_svp(state: &PlayerState, app: &AppHandle, enabled: bool) -> Result<()
     state.emit_property(app, "svp-enabled", Value::Bool(enabled));
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn svp_not_available_by_default() {
+        // Mock: always false until VapourSynth/SVP installed
+        assert!(!is_svp_available());
+    }
+}

@@ -48,3 +48,41 @@ impl PlayerState {
         let _ = app.emit("playback-ended", reason.to_string());
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn set_and_get() {
+        let s = PlayerState::new();
+        s.set("volume", json!(80));
+        assert_eq!(s.get("volume"), Some(json!(80)));
+        assert_eq!(s.get("missing"), None);
+    }
+
+    #[test]
+    fn overwrite_value() {
+        let s = PlayerState::new();
+        s.set("pause", json!(false));
+        s.set("pause", json!(true));
+        assert_eq!(s.get("pause"), Some(json!(true)));
+    }
+
+    #[test]
+    fn current_url_default_none() {
+        let s = PlayerState::new();
+        assert!(s.current_url.lock().is_none());
+    }
+
+    #[test]
+    fn properties_isolated_per_key() {
+        let s = PlayerState::new();
+        s.set("a", json!(1));
+        s.set("b", json!(2));
+        assert_eq!(s.get("a"), Some(json!(1)));
+        assert_eq!(s.get("b"), Some(json!(2)));
+        assert_eq!(s.properties.lock().len(), 2);
+    }
+}
