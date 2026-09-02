@@ -1,0 +1,29 @@
+{
+  "tasks": {
+    "dev": "deno run -A npm:vite",
+    "build": "deno run -A npm:vite build",
+    "preview": "deno run -A npm:vite preview",
+    "check": "deno run -A npm:svelte-check --tsconfig ./tsconfig.json",
+    "fmt": "deno fmt",
+    "lint": "deno lint",
+    "tauri": "deno run -A npm:@tauri-apps/cli",
+    "tauri:dev": "deno task tauri dev",
+    "tauri:build": "deno task tauri build"
+  },
+  "imports": {
+    "svelte": "npm:svelte@^4.2.0",
+    "vite": "npm:vite@^5.4.0"
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "singleQuote": false
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "nodeModulesDir": "auto",
+  "unstable": ["byonm"]
+}

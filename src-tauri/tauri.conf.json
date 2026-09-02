@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "deno task dev",
+    "beforeBuildCommand": "deno task build",
     "devUrl": "http://localhost:1420",
     "frontendDist": "../build"
   },
