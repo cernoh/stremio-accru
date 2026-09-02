@@ -9,6 +9,12 @@ codebase, MPV everywhere, zero-config portability.
 > (HDR/Anime4K/SVP/Skip/Tracks/Thumbs), and Settings/Portability + Wizard all
 > merged; CI green. See [`docs/PLAN.md`](docs/PLAN.md) for architecture,
 > research, and milestones.
+## Screenshot
+
+![Stremio Accru — Tauri main window (1280×720, Xvfb+openbox)](docs/screenshots/tauri-main-window.png)
+
+*`nix run` on NixOS (Xvfb :98 + openbox, `GDK_BACKEND=x11`) — 1280×720 viewable window `0x400003 Stremio Accru` via `xwd -id`. For headless CI the same UI is served at `http://127.0.0.1:1420` (`docs/screenshots/vite-frontend.png`).*
+
 
 ## Stack
 
