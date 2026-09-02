@@ -19,14 +19,19 @@ export const coreState = writable<unknown>(null);
 export const addons = writable<unknown[]>([]);
 export const catalogs = writable<unknown[]>([]);
 
-export async function dispatchAction(action: Record<string, unknown>): Promise<CoreResult> {
+export async function dispatchAction(
+  action: Record<string, unknown>,
+): Promise<CoreResult> {
   const result = (await invoke("dispatch_action", { action })) as CoreResult;
   if (result?.state) coreState.set(result.state);
   if (result?.state?.addons) addons.set(result.state.addons as unknown[]);
   if (result?.state?.catalogs) catalogs.set(result.state.catalogs as unknown[]);
   if (result?.catalog) catalogs.set([result.catalog]);
   if (result?.stream?.url) {
-    await invoke("load", { url: result.stream.url, opts: { url: result.stream.url } });
+    await invoke("load", {
+      url: result.stream.url,
+      opts: { url: result.stream.url },
+    });
   }
   return result;
 }
