@@ -80,12 +80,23 @@ impl CoreRuntime {
         tracing::info!(target: "core", "dispatch {typ} {action}");
         match typ {
             "LoadCatalog" => {
-                let id = action.get("id").and_then(Value::as_str).unwrap_or("movie:popular");
-                let catalog = self.catalogs.read().get(id).cloned().unwrap_or(json!({"id": id, "items": []}));
+                let id = action
+                    .get("id")
+                    .and_then(Value::as_str)
+                    .unwrap_or("movie:popular");
+                let catalog = self
+                    .catalogs
+                    .read()
+                    .get(id)
+                    .cloned()
+                    .unwrap_or(json!({"id": id, "items": []}));
                 json!({"type": "NewState", "state": self.get_state(), "catalog": catalog})
             }
             "GetMeta" => {
-                let id = action.get("id").and_then(Value::as_str).unwrap_or("tt0133093");
+                let id = action
+                    .get("id")
+                    .and_then(Value::as_str)
+                    .unwrap_or("tt0133093");
                 let meta = json!({
                     "id": id,
                     "name": "Sample Title",
@@ -102,7 +113,10 @@ impl CoreRuntime {
             }
             "ResolveStream" => {
                 // In real core: addon_transport → stream URL, then StreamingServer
-                let id = action.get("id").and_then(Value::as_str).unwrap_or("tt0133093");
+                let id = action
+                    .get("id")
+                    .and_then(Value::as_str)
+                    .unwrap_or("tt0133093");
                 let stream = json!({
                     "url": format!("https://example.com/stream/{id}.mp4"),
                     "behaviorHints": {"bingeGroup": format!("{id}")},
@@ -112,7 +126,9 @@ impl CoreRuntime {
             }
             "InstallAddon" => {
                 let url = action.get("url").and_then(Value::as_str).unwrap_or("");
-                self.addons.write().push(json!({"id": url, "url": url, "installed": true}));
+                self.addons
+                    .write()
+                    .push(json!({"id": url, "url": url, "installed": true}));
                 json!({"type": "NewState", "state": self.get_state()})
             }
             _ => json!({"type": "NewState", "state": self.get_state()}),

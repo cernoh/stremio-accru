@@ -30,12 +30,16 @@ pub struct PlayerBackendState {
 
 impl PlayerBackendState {
     pub fn new(app: AppHandle, player_state: Arc<PlayerState>) -> Self {
-        let backend: Box<dyn PlayerBackend> = if cfg!(target_os = "android") || cfg!(target_os = "ios") {
-            Box::new(MobilePlayer::new(app, player_state.clone()))
-        } else {
-            Box::new(DesktopPlayer::new(app, player_state.clone()))
-        };
-        Self { backend, state: player_state }
+        let backend: Box<dyn PlayerBackend> =
+            if cfg!(target_os = "android") || cfg!(target_os = "ios") {
+                Box::new(MobilePlayer::new(app, player_state.clone()))
+            } else {
+                Box::new(DesktopPlayer::new(app, player_state.clone()))
+            };
+        Self {
+            backend,
+            state: player_state,
+        }
     }
 }
 
@@ -54,7 +58,10 @@ pub async fn load(
 ) -> Result<(), String> {
     let load_opts = opts.unwrap_or(LoadOpts { url: url.clone() });
     let guard = backend.lock();
-    guard.backend.load(&url, load_opts).map_err(|e| e.to_string())?;
+    guard
+        .backend
+        .load(&url, load_opts)
+        .map_err(|e| e.to_string())?;
     tracing::info!("player.load ok url={url}");
     Ok(())
 }
@@ -66,7 +73,10 @@ pub async fn set_property(
     value: Value,
 ) -> Result<(), String> {
     let guard = backend.lock();
-    guard.backend.set_property(&key, value).map_err(|e| e.to_string())
+    guard
+        .backend
+        .set_property(&key, value)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -86,7 +96,10 @@ pub async fn command(
 ) -> Result<(), String> {
     let guard = backend.lock();
     let refs: Vec<&str> = args.iter().map(String::as_str).collect();
-    guard.backend.command(&cmd, &refs).map_err(|e| e.to_string())
+    guard
+        .backend
+        .command(&cmd, &refs)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -101,7 +114,10 @@ pub async fn set_shader_preset(
         _ => Anime4KPreset::Off,
     };
     let guard = backend.lock();
-    guard.backend.set_shader_preset(p).map_err(|e| e.to_string())
+    guard
+        .backend
+        .set_shader_preset(p)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -115,7 +131,10 @@ pub async fn set_visual_profile(
         _ => VisualProfile::Kai,
     };
     let guard = backend.lock();
-    guard.backend.set_visual_profile(p).map_err(|e| e.to_string())
+    guard
+        .backend
+        .set_visual_profile(p)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]

@@ -3,7 +3,11 @@ use serde_json::Value;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
 
-use super::{backend::{Anime4KPreset, AudioPreset, PlayerBackend, VisualProfile}, state::PlayerState, LoadOpts};
+use super::{
+    backend::{Anime4KPreset, AudioPreset, PlayerBackend, VisualProfile},
+    state::PlayerState,
+    LoadOpts,
+};
 
 pub struct MobilePlayer {
     state: Arc<PlayerState>,
@@ -39,7 +43,12 @@ impl PlayerBackend for MobilePlayer {
 
     fn set_property(&self, key: &str, val: Value) -> Result<()> {
         // On mobile, HDR/shader/SVP keys are gated in UI; log and no-op if unsupported
-        let gated = ["glsl-shaders", "target-peak", "tone-mapping", "hdr-compute-peak"];
+        let gated = [
+            "glsl-shaders",
+            "target-peak",
+            "tone-mapping",
+            "hdr-compute-peak",
+        ];
         if gated.contains(&key) {
             tracing::warn!(target: "player", "MobilePlayer gated key {key} ignored (desktop-only)");
             return Ok(());
@@ -66,7 +75,10 @@ impl PlayerBackend for MobilePlayer {
                 self.state.emit_time_pos(&self.app, pos);
             }
         }
-        let _ = self.app.emit("player:command", serde_json::json!({ "cmd": cmd, "args": args }));
+        let _ = self.app.emit(
+            "player:command",
+            serde_json::json!({ "cmd": cmd, "args": args }),
+        );
         Ok(())
     }
 
@@ -89,7 +101,11 @@ impl PlayerBackend for MobilePlayer {
         self.state.set("brightness", Value::from(brightness));
         self.state.set("saturation", Value::from(saturation));
         self.state.set("gamma", Value::from(gamma));
-        self.state.emit_property(&self.app, "visual-profile", Value::String(format!("{profile:?}")));
+        self.state.emit_property(
+            &self.app,
+            "visual-profile",
+            Value::String(format!("{profile:?}")),
+        );
         Ok(())
     }
 
@@ -97,11 +113,14 @@ impl PlayerBackend for MobilePlayer {
         tracing::info!(target: "player", "MobilePlayer::set_audio_preset {preset:?}");
         let af = match preset {
             AudioPreset::Off => "",
-            AudioPreset::Night => "lavfi=[highpass=f=120,lowpass=f=10000,equalizer=f=2000:width_type=o:width=2:g=6]",
+            AudioPreset::Night => {
+                "lavfi=[highpass=f=120,lowpass=f=10000,equalizer=f=2000:width_type=o:width=2:g=6]"
+            }
             AudioPreset::Voice => "lavfi=[highpass=f=80,equalizer=f=2000:g=8,equalizer=f=4000:g=6]",
         };
         self.state.set("af", Value::String(af.to_string()));
-        self.state.emit_property(&self.app, "af", Value::String(af.to_string()));
+        self.state
+            .emit_property(&self.app, "af", Value::String(af.to_string()));
         Ok(())
     }
 }

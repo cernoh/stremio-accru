@@ -3,7 +3,10 @@ use tauri::{AppHandle, Manager};
 
 /// Portable if ACCRU_PORTABLE=1 or a writable `portable_config` dir is sibling to exe/resource.
 pub fn is_portable(app: &AppHandle) -> bool {
-    if std::env::var("ACCRU_PORTABLE").map(|v| v == "1" || v.eq_ignore_ascii_case("true")).unwrap_or(false) {
+    if std::env::var("ACCRU_PORTABLE")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+    {
         return true;
     }
     // Check exe dir for portable_config or portable_data marker
