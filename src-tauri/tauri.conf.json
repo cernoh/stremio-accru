@@ -22,7 +22,7 @@
       "icons/icon.ico",
       "icons/icon.icns"
     ],
-    "resources": ["../portable_config", "../resources"]
+    "resources": ["../portable_config"]
   },
   "plugins": {
     "updater": {
