@@ -27,7 +27,9 @@
   "plugins": {
     "updater": {
       "pubkey": "",
-      "endpoints": ["https://github.com/cernoh/stremio-accru/releases/latest/download/latest.json"]
+      "endpoints": [
+        "https://github.com/cernoh/stremio-accru/releases/latest/download/latest.json"
+      ]
     },
     "store": {}
   }

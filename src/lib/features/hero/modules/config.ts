@@ -4,7 +4,10 @@ export const HERO_LIMITS = { movie: 10, series: 10, anime: 20 };
 
 export type HeroSource = "snoak" | "cinemeta" | "mdblist" | "jikan";
 
-export const SOURCES: Record<string, { name: string; url: (type: string) => string }> = {
+export const SOURCES: Record<
+  string,
+  { name: string; url: (type: string) => string }
+> = {
   snoak: {
     name: "Snoak",
     url: (type) => `https://snoak.example/${type}/trending.json`,
@@ -16,7 +19,9 @@ export const SOURCES: Record<string, { name: string; url: (type: string) => stri
   mdblist: {
     name: "MDBList",
     url: () => {
-      const idx = Number(localStorage.getItem("hero-movie-source-index") ?? "0");
+      const idx = Number(
+        localStorage.getItem("hero-movie-source-index") ?? "0",
+      );
       const custom = localStorage.getItem("hero-mdblist-custom");
       if (custom) return custom;
       return `https://mdblist.com/lists/snoak/${idx}/json`;
@@ -29,11 +34,13 @@ export const SOURCES: Record<string, { name: string; url: (type: string) => stri
 };
 
 export function getMovieCatalogUrl(): string {
-  const src = (localStorage.getItem("hero-movie-source") as HeroSource) ?? "cinemeta";
+  const src = (localStorage.getItem("hero-movie-source") as HeroSource) ??
+    "cinemeta";
   return SOURCES[src]?.url("movie") ?? SOURCES.cinemeta.url("movie");
 }
 
 export function getSeriesCatalogUrl(): string {
-  const src = (localStorage.getItem("hero-series-source") as HeroSource) ?? "cinemeta";
+  const src = (localStorage.getItem("hero-series-source") as HeroSource) ??
+    "cinemeta";
   return SOURCES[src]?.url("series") ?? SOURCES.cinemeta.url("series");
 }

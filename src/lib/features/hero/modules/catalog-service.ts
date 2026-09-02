@@ -4,7 +4,8 @@ import { dispatchAction } from "$lib/stores/core";
 
 const PROXIES = [
   (url: string) => `https://proxy.cors.sh/${url}`,
-  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url: string) =>
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   (url: string) => url,
 ];
 
@@ -14,7 +15,10 @@ async function fetchWithProxy(url: string): Promise<unknown[]> {
       const proxied = wrap(url);
       const res = await fetch(proxied);
       if (!res.ok) continue;
-      const data = (await res.json()) as { metas?: unknown[]; items?: unknown[] };
+      const data = (await res.json()) as {
+        metas?: unknown[];
+        items?: unknown[];
+      };
       const items = data.metas ?? data.items ?? [];
       if (items.length) return items as unknown[];
     } catch {
@@ -24,17 +28,25 @@ async function fetchWithProxy(url: string): Promise<unknown[]> {
   return [];
 }
 
-export async function fetchHeroCatalog(type: "movie" | "series"): Promise<unknown[]> {
+export async function fetchHeroCatalog(
+  type: "movie" | "series",
+): Promise<unknown[]> {
   const cached = getCached(type);
   if (cached?.length) return cached;
 
   // Try core first (Cinemeta via stremio-core mock)
   try {
-    const res = (await dispatchAction({ type: "LoadCatalog", id: `${type}:popular` })) as {
+    const res = (await dispatchAction({
+      type: "LoadCatalog",
+      id: `${type}:popular`,
+    })) as {
       catalog?: { items?: unknown[] };
     };
     if (res.catalog?.items?.length) {
-      const items = (res.catalog.items as unknown[]).slice(0, HERO_LIMITS[type]);
+      const items = (res.catalog.items as unknown[]).slice(
+        0,
+        HERO_LIMITS[type],
+      );
       setCached(type, items);
       return items;
     }

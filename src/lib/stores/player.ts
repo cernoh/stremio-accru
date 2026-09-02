@@ -23,12 +23,15 @@ export async function sendCommand(cmd: string, args: string[] = []) {
 }
 
 export function initListeners() {
-  listen("player:property-changed", (e: { payload: { key: string; value: unknown } }) => {
-    const { key, value } = e.payload;
-    if (key === "time-pos" && typeof value === "number") timePos.set(value);
-    if (key === "path" && typeof value === "string") currentUrl.set(value);
-    if (key === "pause" && typeof value === "boolean") isPaused.set(value);
-  });
+  listen(
+    "player:property-changed",
+    (e: { payload: { key: string; value: unknown } }) => {
+      const { key, value } = e.payload;
+      if (key === "time-pos" && typeof value === "number") timePos.set(value);
+      if (key === "path" && typeof value === "string") currentUrl.set(value);
+      if (key === "pause" && typeof value === "boolean") isPaused.set(value);
+    },
+  );
   listen("player:playback-ended", () => {
     currentUrl.set(null);
     timePos.set(0);
