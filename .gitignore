@@ -41,3 +41,4 @@ src-tauri/gen/
 # Fetch from https://github.com/Stremio/stremio-shell-ng/releases or build from mpv.io
 src-tauri/libmpv-2_*.zip
 src-tauri/mpv-*/
+.worktrees/

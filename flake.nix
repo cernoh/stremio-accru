@@ -34,6 +34,8 @@
           pango
           atk
           harfbuzz
+          dbus
+          zlib
           mpv
           # libmpv headers for libmpv2-sys pkg-config (mirrors stremio-linux-shell mpv-devel)
         ];
@@ -57,7 +59,7 @@
           name = "stremio-accru-dev";
           runtimeInputs = commonRuntimeInputs;
           text = ''
-            export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig:${pkgs.webkitgtk_4_1.dev}/lib/pkgconfig:${pkgs.mpv}/lib/pkgconfig:''${PKG_CONFIG_PATH:-}"
+            export PKG_CONFIG_PATH="${pkgs.lib.makeSearchPathOutput "dev" "lib/pkgconfig" tauriDeps}:${pkgs.lib.makeSearchPathOutput "dev" "share/pkgconfig" tauriDeps}:${pkgs.mpv}/lib/pkgconfig:''${PKG_CONFIG_PATH:-}"
             export WEBKIT_DISABLE_DMABUF_RENDERER=1
             if [ ! -d node_modules ]; then
               echo "→ node_modules missing — running npm install..."
@@ -66,13 +68,12 @@
             exec cargo tauri dev "$@"
           '';
         };
-
         # `nix run .#build` — local production bundle (cargo tauri build)
         buildRunner = pkgs.writeShellApplication {
           name = "stremio-accru-build";
           runtimeInputs = commonRuntimeInputs;
           text = ''
-            export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig:${pkgs.webkitgtk_4_1.dev}/lib/pkgconfig:${pkgs.mpv}/lib/pkgconfig:''${PKG_CONFIG_PATH:-}"
+            export PKG_CONFIG_PATH="${pkgs.lib.makeSearchPathOutput "dev" "lib/pkgconfig" tauriDeps}:${pkgs.lib.makeSearchPathOutput "dev" "share/pkgconfig" tauriDeps}:${pkgs.mpv}/lib/pkgconfig:''${PKG_CONFIG_PATH:-}"
             export WEBKIT_DISABLE_DMABUF_RENDERER=1
             if [ ! -d node_modules ]; then
               echo "→ node_modules missing — running npm install..."
@@ -81,7 +82,6 @@
             exec cargo tauri build "$@"
           '';
         };
-
         # `nix run .#frontend` — just the vite frontend (deno task dev)
         frontendRunner = pkgs.writeShellApplication {
           name = "stremio-accru-frontend";

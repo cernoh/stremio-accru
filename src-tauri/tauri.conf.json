@@ -30,7 +30,6 @@
       "endpoints": [
         "https://github.com/cernoh/stremio-accru/releases/latest/download/latest.json"
       ]
-    },
-    "store": {}
+    }
   }
 }

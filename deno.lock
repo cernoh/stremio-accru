@@ -9,10 +9,7 @@
     "npm:@tauri-apps/plugin-updater@^2.2.0": "2.11.0",
     "npm:svelte-check@4.0.8": "4.0.8_svelte@5.28.0_typescript@5.5.4",
     "npm:svelte@5.28.0": "5.28.0",
-    "npm:svelte@^4.2.0": "4.2.20",
-    "npm:typescript@5.5.4": "5.5.4",
-    "npm:vite@5.4.19": "5.4.19",
-    "npm:vite@^5.4.0": "5.4.19"
+    "npm:typescript@5.5.4": "5.5.4"
   },
   "npm": {
     "@ampproject/remapping@2.3.0": {
@@ -668,10 +665,6 @@
     }
   },
   "workspace": {
-    "dependencies": [
-      "npm:svelte@^4.2.0",
-      "npm:vite@^5.4.0"
-    ],
     "packageJson": {
       "dependencies": [
         "npm:@sveltejs/adapter-static@3.0.8",
@@ -680,10 +673,15 @@
         "npm:@tauri-apps/api@^2.1.0",
         "npm:@tauri-apps/plugin-store@^2.1.0",
         "npm:@tauri-apps/plugin-updater@^2.2.0",
+        "npm:@testing-library/jest-dom@^6.4.0",
+        "npm:@testing-library/svelte@5",
+        "npm:@types/node@^26.4.1",
+        "npm:jsdom@24",
         "npm:svelte-check@4.0.8",
         "npm:svelte@5.28.0",
         "npm:typescript@5.5.4",
-        "npm:vite@5.4.19"
+        "npm:vite@5.4.19",
+        "npm:vitest@^1.4.0"
       ]
     }
   }
