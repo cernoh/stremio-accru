@@ -8,9 +8,15 @@ use tauri::AppHandle;
 /// Real: checks video-params primaries/gamma/colormatrix, sets
 /// target-colorspace-hint etc. Mock: toggles props.
 pub fn is_hdr(params: &Value) -> bool {
-    let prim = params.get("primaries").and_then(Value::as_str).unwrap_or("");
+    let prim = params
+        .get("primaries")
+        .and_then(Value::as_str)
+        .unwrap_or("");
     let gamma = params.get("gamma").and_then(Value::as_str).unwrap_or("");
-    prim == "bt.2020" || gamma.contains("smpte2084") || gamma.contains("pq") || gamma.contains("hlg")
+    prim == "bt.2020"
+        || gamma.contains("smpte2084")
+        || gamma.contains("pq")
+        || gamma.contains("hlg")
 }
 
 pub fn apply_hdr_passthrough(state: &PlayerState, app: &AppHandle) -> Result<()> {

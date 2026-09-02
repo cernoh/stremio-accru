@@ -210,9 +210,6 @@ pub async fn select_tracks(
 }
 
 #[tauri::command]
-pub async fn request_thumbnail(
-    app: AppHandle,
-    time_pos: f64,
-) -> Result<(), String> {
+pub async fn request_thumbnail(app: AppHandle, time_pos: f64) -> Result<(), String> {
     thumbnails::request_thumbnail(&app, time_pos).map_err(|e| e.to_string())
 }

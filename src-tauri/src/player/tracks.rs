@@ -41,10 +41,18 @@ pub fn select_best(tracks: &[Value], prefs: &TrackPrefs, kind: &str) -> Option<V
     candidates.sort_by_key(|t| {
         let lang = t.get("lang").and_then(Value::as_str).unwrap_or("");
         let is_forced = t.get("forced").and_then(Value::as_bool).unwrap_or(false);
-        let is_embedded = t.get("external").and_then(Value::as_bool).map(|e| !e).unwrap_or(true);
+        let is_embedded = t
+            .get("external")
+            .and_then(Value::as_bool)
+            .map(|e| !e)
+            .unwrap_or(true);
         (
             if lang == prefs.audio_lang { 0 } else { 1 },
-            if is_forced && prefs.forced_override { 0 } else { 1 },
+            if is_forced && prefs.forced_override {
+                0
+            } else {
+                1
+            },
             if is_embedded { 0 } else { 1 },
         )
     });

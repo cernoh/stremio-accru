@@ -19,7 +19,14 @@ pub fn set_svp(state: &PlayerState, app: &AppHandle, enabled: bool) -> Result<()
         return Ok(());
     }
     state.set("svp-enabled", Value::Bool(enabled));
-    state.set("hwdec", Value::String(if enabled { "auto-copy".into() } else { "auto".into() }));
+    state.set(
+        "hwdec",
+        Value::String(if enabled {
+            "auto-copy".into()
+        } else {
+            "auto".into()
+        }),
+    );
     state.set("hr-seek-framedrop", Value::Bool(!enabled));
     state.emit_property(app, "svp-enabled", Value::Bool(enabled));
     Ok(())
