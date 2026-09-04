@@ -122,16 +122,35 @@ seed_portable_config() {
   [ -f "$PC_DIR/input.conf" ] \
     || fetch_to "$MPV_BASE_URL/portable_config/input.conf" "$PC_DIR/input.conf"
   if command -v 7z >/dev/null 2>&1; then
+    # anime4k zip is flat (shaders/ at root plus __MACOSX junk): extract
+    # only shaders/ so nothing clobbers mpv.conf/input.conf above.
     if [ ! -d "$PC_DIR/shaders" ]; then
       tmp="$(mktemp -d)" || die "mktemp failed"
       fetch_to "$ANIME4K_ZIP" "$tmp/anime4k.zip"
-      7z x -y -o"$PC_DIR" "$tmp/anime4k.zip" >/dev/null || warn "anime4k extract failed"
+      if 7z x -y -o"$tmp/ax" "$tmp/anime4k.zip" shaders >/dev/null; then
+        mkdir -p "$PC_DIR/shaders"
+        cp -r "$tmp/ax/shaders/." "$PC_DIR/shaders/"
+      else
+        warn "anime4k extract failed"
+      fi
       rm -rf "$tmp"
     fi
-    if [ ! -d "$PC_DIR/scripts/thumbfast.lua" ] && [ ! -f "$PC_DIR/scripts/thumbfast.lua" ]; then
+    # thumbfast 7z nests everything under portable_config/ alongside a
+    # Windows mpv.exe bundle: lift only the lua + conf, drop the prefix.
+    if [ ! -f "$PC_DIR/scripts/thumbfast.lua" ]; then
       tmp="$(mktemp -d)" || die "mktemp failed"
       fetch_to "$THUMBFAST_7Z" "$tmp/thumbfast.7z"
-      7z x -y -o"$PC_DIR" "$tmp/thumbfast.7z" >/dev/null || warn "thumbfast extract failed"
+      if 7z x -y -o"$tmp/tf" "$tmp/thumbfast.7z" \
+          portable_config/scripts/thumbfast.lua \
+          portable_config/script-opts/thumbfast.conf >/dev/null; then
+        mkdir -p "$PC_DIR/scripts" "$PC_DIR/script-opts"
+        cp "$tmp/tf/portable_config/scripts/thumbfast.lua" "$PC_DIR/scripts/"
+        cp "$tmp/tf/portable_config/script-opts/thumbfast.conf" "$PC_DIR/script-opts/"
+        # Windows-only mpv.exe path: use system mpv via PATH instead.
+        sed -i 's|^mpv_path=|#mpv_path=|' "$PC_DIR/script-opts/thumbfast.conf"
+      else
+        warn "thumbfast extract failed"
+      fi
       rm -rf "$tmp"
     fi
   else
@@ -179,7 +198,19 @@ check_all() { # --check: fail on missing required pieces, warn on optional
   [ -f "$SERVER_JS" ] || { echo "missing: $SERVER_JS"; fail=1; }
   [ -f "$PC_DIR/stremio-settings.ini" ] || { echo "missing: $PC_DIR/stremio-settings.ini"; fail=1; }
   [ -f "$PC_DIR/mpv.conf" ] || { echo "missing: $PC_DIR/mpv.conf"; fail=1; }
-  [ -f "$PC_DIR/input.conf" ] || { echo "missing: $PC_DIR/input.conf"; fail=1; }
+  # mpv ~~/ resolution: every glsl-shader named by mpv.conf must exist.
+  if [ -f "$PC_DIR/mpv.conf" ]; then
+    missing_shaders="$(grep -o '~~/[^";]*\.glsl' "$PC_DIR/mpv.conf" 2>/dev/null | sed 's|^~~/||' | while read -r s; do [ -f "$PC_DIR/$s" ] || echo "$s"; done)"
+    if [ -z "$missing_shaders" ]; then
+      echo "shaders: ok"
+    elif [ -d "$PC_DIR/shaders" ]; then
+      echo "missing shaders:"; printf '%s\n' "$missing_shaders" | sed 's|^|  /|'; fail=1
+    else
+      echo "optional missing: shaders/ (install p7zip and re-run to seed)"
+    fi
+  fi
+  [ -f "$PC_DIR/scripts/thumbfast.lua" ] \
+    || echo "optional missing: scripts/thumbfast.lua (install p7zip and re-run to seed)"
   if [ "$fail" -eq 0 ] && [ -f "$VERSION_FILE" ]; then
     info="$(baseline_server)" || { echo "baseline unreachable"; return 1; }
     url="${info% *}"; sum="${info#* }"
