@@ -26,6 +26,7 @@
 # Verification
 
 - `nix develop --command scripts/stremio-linux.sh --check`.
+- Visual run (server + browser): `nix run .#linux`.
 
 # Child DOX Index
 

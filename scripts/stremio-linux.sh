@@ -198,13 +198,14 @@ check_all() { # --check: fail on missing required pieces, warn on optional
   [ -f "$SERVER_JS" ] || { echo "missing: $SERVER_JS"; fail=1; }
   [ -f "$PC_DIR/stremio-settings.ini" ] || { echo "missing: $PC_DIR/stremio-settings.ini"; fail=1; }
   [ -f "$PC_DIR/mpv.conf" ] || { echo "missing: $PC_DIR/mpv.conf"; fail=1; }
+  [ -f "$PC_DIR/input.conf" ] || { echo "missing: $PC_DIR/input.conf"; fail=1; }
   # mpv ~~/ resolution: every glsl-shader named by mpv.conf must exist.
   if [ -f "$PC_DIR/mpv.conf" ]; then
     missing_shaders="$(grep -o '~~/[^";]*\.glsl' "$PC_DIR/mpv.conf" 2>/dev/null | sed 's|^~~/||' | while read -r s; do [ -f "$PC_DIR/$s" ] || echo "$s"; done)"
     if [ -z "$missing_shaders" ]; then
       echo "shaders: ok"
     elif [ -d "$PC_DIR/shaders" ]; then
-      echo "missing shaders:"; printf '%s\n' "$missing_shaders" | sed 's|^|  /|'; fail=1
+      echo "missing shaders:"; printf '%s\n' "$missing_shaders" | sed 's|^|  |'; fail=1
     else
       echo "optional missing: shaders/ (install p7zip and re-run to seed)"
     fi
