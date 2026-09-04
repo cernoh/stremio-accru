@@ -119,7 +119,7 @@
             echo "  deno task build          # frontend build"
             echo "  deno task tauri dev      # tauri desktop"
             echo "  cargo check --manifest-path src-tauri/Cargo.toml"
-            export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig:${pkgs.webkitgtk_4_1.dev}/lib/pkgconfig:${pkgs.mpv}/lib/pkgconfig:''${PKG_CONFIG_PATH:-}"
+            export PKG_CONFIG_PATH="${pkgs.lib.makeSearchPathOutput "dev" "lib/pkgconfig" tauriDeps}:${pkgs.lib.makeSearchPathOutput "dev" "share/pkgconfig" tauriDeps}:${pkgs.mpv}/lib/pkgconfig:''${PKG_CONFIG_PATH:-}"
           '';
 
           WEBKIT_DISABLE_DMABUF_RENDERER = "1";
