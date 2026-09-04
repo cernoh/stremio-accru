@@ -76,8 +76,10 @@ Default section order:
 
 ## User Preferences
 
-When the user requests a durable behavior change, record it here or in the relevant child AGENTS.md
+- ASK FIRST before any structural change (tree surgery, remote rewrites, branch deletions).
+- Remote repos use issue-linked branches and PRs: one issue per change, branch `feat/<N>-topic` or `fix/<N>-topic`, PR body carries `Closes #<N>`, PR title ends with `(#<N>)`.
+- Remote `zaarrg` (Zaarrg/stremio-community-v5) is a read-only reference for the Linux port; `origin` is the only push target.
 
 ## Child DOX Index
 
-This project is not yet indexed. Before continuing you must scan the project, build the DOX tree and replace this message with the actual index. Go deep and scan files recursively to properly evaluate complexity and create nested DOX files where needed.
+- No child docs. Single-file baseline plus root-owned Linux entry: `flake.nix` (nix shell, #37), `.envrc` (`use flake`).
