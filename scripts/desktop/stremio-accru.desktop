@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Stremio Accru
+Comment=Stremio Community on Linux (deno desktop + streaming server)
+# After: nix profile install github:cernoh/stremio-accru#stremio-accru
+Exec=stremio-accru
+# Verify against your compositor client list; WebKitGTK reports its own id.
+#StartupWMClass=stremio-accru
+Categories=AudioVideo;Video;
