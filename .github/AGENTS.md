@@ -17,7 +17,9 @@
   the compiled binary plus `stremio-linux.sh` and `stremio-accru.desktop`.
 - Root `.gitattributes` pins LF for sources: Windows CRLF checkouts fail
   `deno fmt --check` and break `#!` scripts. Matrix is `fail-fast: false`
-  so one OS never cancels the others.
+  so one OS never cancels the others. The build job defaults
+  `run.shell` to `bash` (git-bash on windows-latest); only the zip pack
+  step overrides to `pwsh` for `Compress-Archive`.
 
 # Work Guidance
 

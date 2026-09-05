@@ -30,6 +30,9 @@ jobs:
             bin: stremio-accru-macos
             archive: stremio-accru-macos.tar.gz
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: denoland/setup-deno@v2
