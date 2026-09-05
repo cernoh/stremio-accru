@@ -15,6 +15,9 @@
   previous-release lookup, so the first tag has nothing to special-case.
 - Linux/macOS legs pack tarballs, Windows packs a zip; every archive holds
   the compiled binary plus `stremio-linux.sh` and `stremio-accru.desktop`.
+- Root `.gitattributes` pins LF for sources: Windows CRLF checkouts fail
+  `deno fmt --check` and break `#!` scripts. Matrix is `fail-fast: false`
+  so one OS never cancels the others.
 
 # Work Guidance
 

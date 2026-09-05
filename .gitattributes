@@ -1,0 +1,7 @@
+# Windows checkouts must keep LF: `deno fmt --check` in the tag release
+# fails on CRLF, and the `#!` scripts break under CRLF execution.
+*.ts text eol=lf
+*.sh text eol=lf
+*.nix text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
