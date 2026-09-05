@@ -8,6 +8,8 @@
 - `scripts/AGENTS.md` owns the launcher contract; this doc owns the
   `deno desktop` layer on top of it.
 
+# Local Contracts
+
 - `deno desktop` always compiles; `nix run .#app` builds to
   `$XDG_CACHE_HOME/stremio-accru/bundle` (rebuilt when `${./scripts}`
   changes) and patchelf-patches the bundle for NixOS stub-ld.
