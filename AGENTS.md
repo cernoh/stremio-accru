@@ -82,4 +82,4 @@ Default section order:
 
 ## Child DOX Index
 
-- No child docs. Single-file baseline plus root-owned Linux entry: `flake.nix` (nix shell, #37), `.envrc` (`use flake`).
+- `docs/` (Linux v1 scope decision, #36). Single-file baseline plus root-owned Linux entry: `flake.nix` (nix shell, #37), `.envrc` (`use flake`).
