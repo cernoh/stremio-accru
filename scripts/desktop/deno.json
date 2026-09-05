@@ -1,0 +1,15 @@
+{
+  "name": "stremio-accru",
+  "version": "0.1.0",
+  "exports": "./main.ts",
+  "desktop": {
+    "app": {
+      "name": "Stremio Accru",
+      "identifier": "io.github.cernoh.stremio-accru"
+    },
+    "backend": "webview",
+    "output": {
+      "linux": "./dist/stremio-accru"
+    }
+  }
+}

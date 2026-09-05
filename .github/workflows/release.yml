@@ -1,0 +1,77 @@
+name: Tag release
+
+# Builds the desktop app for Linux, Windows, and macOS on every `v*` tag
+# push and attaches the binaries to the tag's GitHub Release (issue #46).
+# First release has no prior tag: `gh release create --generate-notes`
+# handles that server-side, so no previous-release lookup exists here.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            bin: stremio-accru-linux
+            archive: stremio-accru-linux.tar.gz
+          - os: windows-latest
+            bin: stremio-accru-windows.exe
+            archive: stremio-accru-windows.zip
+          - os: macos-latest
+            bin: stremio-accru-macos
+            archive: stremio-accru-macos.tar.gz
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check, lint, format
+        run: |
+          deno check scripts/desktop/main.ts
+          deno lint scripts/desktop/main.ts
+          deno fmt --check scripts/desktop/main.ts
+      - name: Compile binary
+        run: |
+          mkdir -p dist
+          deno compile \
+            --allow-run --allow-net --allow-read --allow-env --allow-write \
+            --output dist/${{ matrix.bin }} \
+            scripts/desktop/main.ts
+      - name: Stage launcher
+        shell: bash
+        run: cp scripts/stremio-linux.sh scripts/desktop/stremio-accru.desktop dist/
+      - name: Pack tarball (linux, macos)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: tar -czf ${{ matrix.archive }} -C dist ${{ matrix.bin }} stremio-linux.sh stremio-accru.desktop
+      - name: Pack zip (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path dist/${{ matrix.bin }}, dist/stremio-linux.sh, dist/stremio-accru.desktop -DestinationPath ${{ matrix.archive }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive }}
+          path: ${{ matrix.archive }}
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" --generate-notes dist/*
