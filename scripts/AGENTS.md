@@ -10,6 +10,9 @@
 
 - `stremio-linux.sh` runs with `bash`, system `node`, `curl`, `jq`; `7z`
   (p7zip) optional for archive seeding. All are in `flake.nix`.
+- `stremio-linux.sh` provisions the server HTTPS cert (`httpsCert.json`
+  under `~/.stremio-server`, loopback via api.strem.io, renewed by date)
+  before starting node; `--check` fails when it is missing/invalid.
 - Archive seeding is selective: anime4k contributes only `shaders/` (no
   `__MACOSX`, no root-conf clobber); thumbfast contributes only its lua +
   conf with the `portable_config/` prefix stripped, `mpv.exe` bundle left

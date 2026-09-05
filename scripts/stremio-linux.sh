@@ -5,6 +5,8 @@
 # What it does (mirrors upstream src/main.cpp + src/node/server.cpp):
 #   - seeds portable_config under the XDG data dir
 #   - fetches versioned server.js via the version-baseline chain when missing
+#   - provisions the server HTTPS cert (loopback, api.strem.io) so the web
+#     UI detects the server instead of showing "not available"
 #   - runs server.js with system node and NO_CORS=1 (unless
 #     --streaming-server-disabled), opens the web UI in a browser
 #
@@ -28,6 +30,12 @@ SETTINGS_URL="https://raw.githubusercontent.com/Zaarrg/stremio-desktop-v5/${UPST
 MPV_BASE_URL="https://raw.githubusercontent.com/Zaarrg/stremio-community-v5/${UPSTREAM_REF}/utils/mpv/anime4k"
 ANIME4K_ZIP="https://raw.githubusercontent.com/Zaarrg/stremio-community-v5/${UPSTREAM_REF}/utils/mpv/anime4k/anime4k-High-end.zip"
 THUMBFAST_7Z="https://raw.githubusercontent.com/Zaarrg/stremio-community-v5/${UPSTREAM_REF}/utils/mpv/thumbfast/thumbfast.7z"
+# HTTPS cert for the server endpoint (server.js lazy-https reads
+# <appPath>/httpsCert.json; the web UI probes https://<loopback>:12470).
+# api.strem.io issues loopback certs without auth; cached by date.
+CERT_ENDPOINT="${STREMIO_CERT_ENDPOINT:-http://api.strem.io/api/certificateGet}"
+APP_PATH_DIR="${APP_PATH:-$HOME/.stremio-server}"
+CERT_FILE="$APP_PATH_DIR/httpsCert.json"
 
 # Web UI order per maintainer (#39): web.stremio.com first.
 WEBUI_URLS=(
@@ -61,7 +69,8 @@ Options:
 Layout: server.js + .server-version + portable_config/ live under
 \$XDG_DATA_HOME/stremio-accru (or --data-dir). server.js follows the latest
 S3 build named by the version baseline; checksum from the baseline is
-verified on fetch.
+verified on fetch. The server HTTPS cert (httpsCert.json, loopback) is
+provisioned under ~/.stremio-server (or \$APP_PATH) and renewed by date.
 
 Limitations (the C++ embed is NOT ported): no native window/tray, no
 embedded mpv (system mpv via portable_config), no Discord RPC, no
@@ -176,6 +185,49 @@ ensure_server_js() { # fetches when missing or baseline moved on
   fi
   printf '%s\n%s\n' "$url" "$actual" >"$VERSION_FILE"
 }
+cert_valid() { # file -> 0 when notBefore <= now <= notAfter
+  [ -f "$1" ] || return 1
+  need jq
+  local nb na now
+  nb="$(jq -r '.notBefore // empty' "$1")"
+  na="$(jq -r '.notAfter // empty' "$1")"
+  [ -n "$nb" ] && [ -n "$na" ] || return 1
+  now="$(date +%s)"
+  [ "$(date -d "$nb" +%s 2>/dev/null)" -le "$now" ] \
+    && [ "$now" -le "$(date -d "$na" +%s 2>/dev/null)" ]
+}
+
+ensure_https_cert() { # fetch loopback cert when missing or expired
+  cert_valid "$CERT_FILE" && return 0
+  need node; need curl
+  mkdir -p "$APP_PATH_DIR" || { warn "cannot create $APP_PATH_DIR"; return 1; }
+  local resp
+  resp="$(curl -fsSL --retry 2 --max-time 30 -X POST "$CERT_ENDPOINT" \
+    -H 'Content-Type: application/json' \
+    -d '{"authKey":null,"ipAddress":"127.0.0.1"}')" \
+    || { warn "cert fetch failed: $CERT_ENDPOINT"; return 1; }
+  printf '%s' "$resp" | node -e '
+    let s = "";
+    process.stdin.on("data", (c) => s += c).on("end", () => {
+      const certResp = JSON.parse(JSON.parse(s).result.certificate);
+      const b64 = (x) => Buffer.from(x, "base64").toString("ascii");
+      const out = {
+        domain: "127-0-0-1" + certResp.commonName.replace("*", ""),
+        key: b64(certResp.contents.PrivateKey),
+        cert: b64(certResp.contents.Certificate),
+        notBefore: certResp.contents.NotBefore,
+        notAfter: certResp.contents.NotAfter,
+      };
+      require("fs").writeFileSync(process.argv[1], JSON.stringify(out));
+    });' "$CERT_FILE" \
+    || { warn "cert parse failed"; return 1; }
+  if cert_valid "$CERT_FILE"; then
+    echo "$PROG: https cert: $CERT_FILE"
+  else
+    warn "fetched cert invalid"
+    return 1
+  fi
+}
 
 pick_webui() { # first reachable URL, else the default
   local u
@@ -199,6 +251,11 @@ check_all() { # --check: fail on missing required pieces, warn on optional
   [ -f "$PC_DIR/stremio-settings.ini" ] || { echo "missing: $PC_DIR/stremio-settings.ini"; fail=1; }
   [ -f "$PC_DIR/mpv.conf" ] || { echo "missing: $PC_DIR/mpv.conf"; fail=1; }
   [ -f "$PC_DIR/input.conf" ] || { echo "missing: $PC_DIR/input.conf"; fail=1; }
+  if cert_valid "$CERT_FILE"; then
+    echo "https cert: ok"
+  else
+    echo "missing/invalid: $CERT_FILE"; fail=1
+  fi
   # mpv ~~/ resolution: every glsl-shader named by mpv.conf must exist.
   if [ -f "$PC_DIR/mpv.conf" ]; then
     missing_shaders="$(grep -o '~~/[^";]*\.glsl' "$PC_DIR/mpv.conf" 2>/dev/null | sed 's|^~~/||' | while read -r s; do [ -f "$PC_DIR/$s" ] || echo "$s"; done)"
@@ -243,6 +300,7 @@ seed_portable_config
 
 if [ "$MODE_CHECK" -eq 1 ]; then
   [ -f "$SERVER_JS" ] || ensure_server_js
+  cert_valid "$CERT_FILE" || ensure_https_cert
   check_all
   exit $?
 fi
@@ -261,6 +319,7 @@ fi
 
 if [ "$STREAMING_SERVER" -eq 1 ]; then
   ensure_server_js
+  ensure_https_cert || warn "continuing without HTTPS endpoint (web UI may report server unavailable)"
   need node
   cd "$DATA_DIR" || die "cannot cd $DATA_DIR"
   NO_CORS=1 node "$SERVER_JS" >"$DATA_DIR/server.log" 2>&1 &
