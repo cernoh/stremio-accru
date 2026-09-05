@@ -91,7 +91,10 @@
         gcc.cc.lib
       ];
       # Standalone app (#43): official deno desktop (webview backend) +
-      # launcher toolset for the supervised server.
+      # launcher toolset for the supervised server. Backend findings (#44):
+      # CEF renders but never commits a frame on MangoWM; webview maps
+      # natively with the dmabuf renderer off (explicit-sync acquire
+      # points) and needs glib-networking GIO modules for TLS.
       appDeps = pkgs: launcherDeps pkgs ++ (with pkgs; [ deno webkitgtk_6_0 ]);
       denoPkg = pkgs: pkgs.writeShellApplication {
         name = "stremio-accru";
@@ -99,6 +102,8 @@
         text = ''
           export LD_LIBRARY_PATH=${nixpkgs.lib.makeLibraryPath (webkitLibs pkgs)}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           export STREMIO_LAUNCHER="${./scripts}/stremio-linux.sh"
+          export WEBKIT_DISABLE_DMABUF_RENDERER=1
+          export GIO_EXTRA_MODULES=${pkgs.glib-networking}/lib/gio/modules''${GIO_EXTRA_MODULES:+:$GIO_EXTRA_MODULES}
           SRC="${./scripts}"
           BUNDLE="''${XDG_CACHE_HOME:-$HOME/.cache}/stremio-accru/bundle"
           OUT="$BUNDLE/stremio-accru"
@@ -119,6 +124,18 @@
             done
             printf '%s' "$SRC" >"$BUNDLE/.src"
           fi
+          # Self-healing laufey backend (#44): deno downloads backends into
+          # ~/.cache/deno/laufey/ on first use and version bumps, where the
+          # NixOS stub-ld cannot run them (exit 127). Re-patch any backend
+          # whose interpreter drifted (idempotent, skipped when current).
+          INTERP=$(cat ${pkgs.stdenv.cc}/nix-support/dynamic-linker)
+          LIBS=${nixpkgs.lib.makeLibraryPath (webkitLibs pkgs)}
+          for be in "''${XDG_CACHE_HOME:-$HOME/.cache}"/deno/laufey/*/webview/*/laufey_webview; do
+            [ -e "$be" ] || continue
+            if [ "$(patchelf --print-interpreter "$be" 2>/dev/null)" != "$INTERP" ]; then
+              patchelf --set-interpreter "$INTERP" --set-rpath "$LIBS" "$be"
+            fi
+          done
           exec "$BIN" "$@"
         '';
       };
@@ -147,6 +164,8 @@
 
             shellHook = ''
               export LD_LIBRARY_PATH=${nixpkgs.lib.makeLibraryPath (webkitLibs pkgs)}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+              export WEBKIT_DISABLE_DMABUF_RENDERER=1
+              export GIO_EXTRA_MODULES=${pkgs.glib-networking}/lib/gio/modules''${GIO_EXTRA_MODULES:+:$GIO_EXTRA_MODULES}
               command -v node >/dev/null && command -v mpv >/dev/null \
                 || echo "stremio-accru shell: warning, node/mpv missing from PATH"
             '';
