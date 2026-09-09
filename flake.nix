@@ -143,6 +143,54 @@
         type = "app";
         program = nixpkgs.lib.getExe (denoPkg pkgs);
       };
+      # Generic-Linux release binary (#56): `deno compile` inside a
+      # derivation so tag releases build via `nix build`. Unlike denoPkg
+      # this does NOT patchelf (no NixOS interpreter/rpath): the artifact
+      # must run on stock glibc distros. The release workflow stages
+      # stremio-linux.sh + stremio-accru.desktop next to it, keeping the
+      # archive layout from #46. `deno compile` downloads its denort base
+      # binary from dl.deno.land unless already cached, so the zip is
+      # vendored into the cache layout ($DENO_DIR/dl/release/<ver>/).
+      releasePkg = pkgs:
+        let
+          # deno compile downloads a per-arch denort base binary from
+          # dl.deno.land unless already cached; map triple -> sha256 and
+          # vendor it into the cache layout ($DENO_DIR/dl/release/<ver>/).
+          # Re-pin when nixpkgs bumps deno:
+          #   nix store prefetch-file https://dl.deno.land/release/v<ver>/denort-<triple>.zip
+          triple = pkgs.stdenv.hostPlatform.rust.rustcTarget;
+          denortHashes = {
+            "x86_64-unknown-linux-gnu" = "sha256-9q5XiCamc5DKa2GBqM44XewK2g9WAc2+FsD4xlcVJQc=";
+            "aarch64-unknown-linux-gnu" = "sha256-GNSiSJecFoNFoLeBhFUEM5BDmKwScK0WPI2JA8fb6ys=";
+          };
+          denort = pkgs.fetchurl {
+            url = "https://dl.deno.land/release/v${pkgs.deno.version}/denort-${triple}.zip";
+            sha256 = denortHashes.${triple};
+          };
+        in
+        pkgs.stdenv.mkDerivation {
+          pname = "stremio-accru-release";
+          version = "git";
+          src = ./scripts;
+          nativeBuildInputs = [ pkgs.deno ];
+          buildPhase = ''
+            runHook preBuild
+            export DENO_NO_UPDATE_CHECK=1
+            export DENO_DIR="$TMPDIR/deno-cache"
+            mkdir -p "$DENO_DIR/dl/release/v${pkgs.deno.version}"
+            cp "${denort}" "$DENO_DIR/dl/release/v${pkgs.deno.version}/denort-${triple}.zip"
+            deno compile \
+              --allow-run --allow-net --allow-read --allow-env --allow-write \
+              --output stremio-accru-linux \
+              desktop/main.ts
+            runHook postBuild
+          '';
+          installPhase = ''
+            runHook preInstall
+            install -Dm755 stremio-accru-linux "$out/bin/stremio-accru-linux"
+            runHook postInstall
+          '';
+        };
     in
     {
       devShells = forEachSystem (system:
@@ -186,6 +234,7 @@
         in
         {
           stremio-accru = denoPkg pkgs;
+          stremio-accru-release = releasePkg pkgs;
           default = denoPkg pkgs;
         });
     };
