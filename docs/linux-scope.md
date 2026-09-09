@@ -1,7 +1,19 @@
 # Linux port scope — v1 decision (issue #36)
 
 Upstream `Zaarrg/stremio-community-v5` (`webview-windows` @ `3e96a6f`) is
-Win32 + WebView2 only. Linux v1 ships the **launcher now, GTK later**.
+Win32 + WebView2 only. Linux v1 shipped the **launcher now, GTK later**;
+the GTK step is now the native player (issue #58).
+
+## Native player: `player/` (#58)
+
+GTK4/WebKitGTK-6.0 host (C) making video playback run through mpv inside
+the app window: libmpv renders into a `GtkGLArea` underlay, the transparent
+webview overlays it, WebKit HTML5 media is disabled, and the web UI drives
+mpv over the shell transport (Qt-WebChannel wire contract). The UI loads
+through a local http origin (`player/proxy.js`) because WebKitGTK blocks
+the UI's http://127.0.0.1:11470 server calls as mixed content from an
+https page (Chromium exempts loopback, WebKitGTK does not). Full design
+notes live in `player/AGENTS.md`.
 
 ## v1: `scripts/stremio-linux.sh` (#38)
 
@@ -56,12 +68,12 @@ Windows-only — replaced, not ifdeffed:
 
 ## Out of scope for v1
 
-- Native GTK/WebKit host (webkitgtk 6.0 candidate pinned in `flake.nix`
-  for later) — follow-up issue, not this one.
 - Windows installer/docs work (#11: showcase, winget, disclaimer) — deferred,
   unrelated to the Linux port.
 - Full auto-updater (signatures, partial `server.js` patch keys) — v1 checks
   version/checksum only.
+- Tray/MPRIS/Discord/media keys (official-shell extras; player host #58
+  keeps those for follow-up).
 
 ## Rule
 

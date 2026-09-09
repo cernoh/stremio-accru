@@ -23,7 +23,9 @@
 
 # Work Guidance
 
-- Keep the script dependency-light and honest about the unported C++ embed.
+- Keep the script dependency-light and honest: the launcher runs browser
+  mode; the native player embed (mpv) lives in `player/` (#58) and is not
+  duplicated here.
 - Pin upstream URLs to the `webview-windows` ref; checksums verified on fetch.
 
 # Verification

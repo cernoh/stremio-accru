@@ -84,5 +84,6 @@ Default section order:
 
 - `docs/` (Linux v1 scope decision, #36). Single-file baseline plus root-owned Linux entry: `flake.nix` (nix shell #37, `nix run .#linux` visual run #38), `.envrc` (`use flake`).
 - `scripts/` (Linux launcher, #38).
+- `player/` (native Linux player — mpv playback in the app window, #58).
 - `.github/` (tag release builds for Windows/Linux/macOS, #46).
 - `README.md` (feature notes + download/run instructions, #54).

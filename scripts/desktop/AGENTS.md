@@ -1,18 +1,21 @@
 # Purpose
 
-- Owns the standalone desktop app (issue #43): `deno.json`, `main.ts`,
-  `stremio-accru.desktop`. Runs on MangoWM via `nix run .#app`.
+- Owns the legacy standalone desktop app (issue #43): `deno.json`,
+  `main.ts`, `stremio-accru.desktop`. On Linux this layer is superseded by
+  the native player (`player/`, #58) — kept here because the tag release
+  workflow (#46) still compiles `main.ts` for Windows and macOS.
 
 # Ownership
 
 - `scripts/AGENTS.md` owns the launcher contract; this doc owns the
-  `deno desktop` layer on top of it.
+  `deno desktop` layer on top of it. `player/AGENTS.md` owns the Linux
+  native player.
 
 # Local Contracts
 
-- `deno desktop` always compiles; `nix run .#app` builds to
-  `$XDG_CACHE_HOME/stremio-accru/bundle` (rebuilt when `${./scripts}`
-  changes) and patchelf-patches the bundle for NixOS stub-ld.
+- `deno desktop` always compiles; on Linux the flake no longer builds this
+  app (`.#app` is the native player, #58); the release workflow compiles
+  it directly with `deno compile`.
 - Backend is `webview` (`deno.json`): CEF renders but never commits a
   frame on MangoWM (toplevel acked, zero `wl_surface.attach`, viz wedged;
   reference Brave maps fine). See issue #44 for the forensics.
@@ -40,8 +43,10 @@
 # Verification
 
 - `deno check main.ts`, `deno lint main.ts`, `deno fmt --check main.ts`
-  (run from `scripts/desktop/` inside `nix develop`).
-- `nix run .#app -- --check`; visual: `nix run .#app` on MangoWM.
+  (run from `scripts/desktop/` inside `nix develop`; the release workflow
+  gates the same checks).
+- Visual runs on Linux use the native player (`nix run .#app`, #58); this
+  layer's window behavior is verified on the Windows/macOS release legs.
 
 # Child DOX Index
 
