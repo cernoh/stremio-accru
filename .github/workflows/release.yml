@@ -1,9 +1,11 @@
 name: Tag release
 
-# Builds the desktop app for Linux, Windows, and macOS on every `v*` tag
-# push and attaches the binaries to the tag's GitHub Release (issue #46).
-# First release has no prior tag: `gh release create --generate-notes`
-# handles that server-side, so no previous-release lookup exists here.
+# Builds the desktop app on every `v*` tag push and attaches the binaries
+# to the tag's GitHub Release (issue #46). The Linux artifact is built
+# from the repo flake via `nix build` (#56); Windows/macOS compile with
+# deno on their native runners. First release has no prior tag:
+# `gh release create --generate-notes` handles that server-side, so no
+# previous-release lookup exists here.
 
 on:
   push:
@@ -15,14 +17,42 @@ permissions:
   contents: write
 
 jobs:
+  build-nix:
+    name: Build Linux (nix)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check, lint, format
+        run: |
+          deno check scripts/desktop/main.ts
+          deno lint scripts/desktop/main.ts
+          deno fmt --check scripts/desktop/main.ts
+      - uses: cachix/install-nix-action@v30
+      - name: Build release binary with nix
+        run: |
+          nix build .#stremio-accru-release -o nix-out --print-build-logs
+          mkdir -p dist
+          cp nix-out/bin/stremio-accru-linux dist/stremio-accru-linux
+      - name: Stage launcher
+        run: cp scripts/stremio-linux.sh scripts/desktop/stremio-accru.desktop dist/
+      - name: Pack tarball (linux)
+        run: tar -czf stremio-accru-linux.tar.gz -C dist stremio-accru-linux stremio-linux.sh stremio-accru.desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stremio-accru-linux.tar.gz
+          path: stremio-accru-linux.tar.gz
+
   build:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            bin: stremio-accru-linux
-            archive: stremio-accru-linux.tar.gz
           - os: windows-latest
             bin: stremio-accru-windows.exe
             archive: stremio-accru-windows.zip
@@ -53,21 +83,20 @@ jobs:
       - name: Stage launcher
         shell: bash
         run: cp scripts/stremio-linux.sh scripts/desktop/stremio-accru.desktop dist/
-      - name: Pack tarball (linux, macos)
-        if: runner.os != 'Windows'
-        shell: bash
-        run: tar -czf ${{ matrix.archive }} -C dist ${{ matrix.bin }} stremio-linux.sh stremio-accru.desktop
       - name: Pack zip (windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: Compress-Archive -Path dist/${{ matrix.bin }}, dist/stremio-linux.sh, dist/stremio-accru.desktop -DestinationPath ${{ matrix.archive }}
+      - name: Pack tarball (macos)
+        if: runner.os == 'macOS'
+        run: tar -czf ${{ matrix.archive }} -C dist ${{ matrix.bin }} stremio-linux.sh stremio-accru.desktop
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.archive }}
           path: ${{ matrix.archive }}
 
   release:
-    needs: build
+    needs: [build-nix, build]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:

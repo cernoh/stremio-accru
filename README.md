@@ -27,8 +27,10 @@ Stremio Community on Linux. Upstream `Zaarrg/stremio-community-v5`
   deno webview window; kept for the release workflow's Windows/macOS legs
   (#46) — on Linux the native player supersedes it.
 - **Tag releases** (`.github/workflows/release.yml`, #46): pushing a
-  `v*` tag compiles the app on Linux, Windows, and macOS runners and
-  publishes the archives to the tag's GitHub Release.
+  `v*` tag builds the Linux artifact with nix from the repo flake
+  (`nix build .#stremio-accru-release`, #56), compiles Windows/macOS
+  on their runners, and publishes the archives to the tag's GitHub
+  Release.
 
 ## Download and run
 
