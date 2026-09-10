@@ -1,5 +1,5 @@
 {
-  description = "stremio-accru Linux app (nix run .#app; shell #37, launcher #38, deno app #43)";
+  description = "stremio-accru Linux app (nix run .#app; shell #37, launcher #38, native player #58)";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -27,121 +27,62 @@
           text = ''exec "${./scripts/stremio-linux.sh}" "$@"'';
         });
       };
-      # Native libs for the downloaded laufey backends (webview webkit2gtk
-      # 4.1 ABI + CEF NSS/ALSA/CUPS set): empirically closed, ldd-verified.
-      webkitLibs = pkgs: with pkgs; [
-        webkitgtk_4_1
-        gtk3
-        glib.out
-        pango
-        cairo
-        gdk-pixbuf
-        atk
-        at-spi2-atk
-        at-spi2-core
-        libsoup_3
-        glib-networking
-        libsecret
-        harfbuzz
-        freetype
-        fontconfig
-        libxkbcommon
-        wayland
-        libx11
-        libxcomposite
-        libxdamage
-        libxext
-        libxfixes
-        libxrandr
-        libxrender
-        libXtst
+      # Native player (#58): GTK4 + WebKitGTK 6 host with a libmpv video
+      # underlay (player/). Headers/libs for building the host and libs for
+      # running it (stdenv adds rpath to buildInputs automatically).
+      playerBuildInputs = pkgs: with pkgs; [
+        gtk4
+        webkitgtk_6_0
+        libepoxy
+        mpv
+        libGL
+        libglvnd
         mesa
-        dbus
-        libdrm
-        libxshmfence
-        libgbm
-        libxcb
-        libXau
-        libXdmcp
-        expat
-        libffi
-        pcre2
-        zlib
-        libpng
-        libjpeg_turbo
-        libtiff
-        libwebp
-        libxml2
-        libxslt
-        sqlite
-        libpsl
-        libtasn1
-        brotli
-        libidn2
-        libunistring
-        krb5
-        keyutils
-        icu
-        nss
-        nspr
-        cups.lib
-        alsa-lib
-        libXi
-        udev
-        gcc.cc.lib
       ];
-      # Standalone app (#43): official deno desktop (webview backend) +
-      # launcher toolset for the supervised server. Backend findings (#44):
-      # CEF renders but never commits a frame on MangoWM; webview maps
-      # natively with the dmabuf renderer off (explicit-sync acquire
-      # points) and needs glib-networking GIO modules for TLS.
-      appDeps = pkgs: launcherDeps pkgs ++ (with pkgs; [ deno webkitgtk_6_0 ]);
-      denoPkg = pkgs: pkgs.writeShellApplication {
-        name = "stremio-accru";
-        runtimeInputs = (appDeps pkgs) ++ (webkitLibs pkgs) ++ (with pkgs; [ patchelf file ]);
-        text = ''
-          export LD_LIBRARY_PATH=${nixpkgs.lib.makeLibraryPath (webkitLibs pkgs)}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-          export STREMIO_LAUNCHER="${./scripts}/stremio-linux.sh"
-          export WEBKIT_DISABLE_DMABUF_RENDERER=1
-          export GIO_EXTRA_MODULES=${pkgs.glib-networking}/lib/gio/modules''${GIO_EXTRA_MODULES:+:$GIO_EXTRA_MODULES}
-          SRC="${./scripts}"
-          BUNDLE="''${XDG_CACHE_HOME:-$HOME/.cache}/stremio-accru/bundle"
-          OUT="$BUNDLE/stremio-accru"
-          BIN="$OUT/stremio-accru"
-          if [ ! -x "$BIN" ] || [ "$(cat "$BUNDLE/.src" 2>/dev/null)" != "$SRC" ]; then
-            rm -rf "$BUNDLE"
-            mkdir -p "$BUNDLE"
-            ( cd "$SRC/desktop" && exec deno desktop \
-              --allow-run --allow-net --allow-read --allow-env --allow-write \
-              --output "$OUT" ./main.ts )
-            INTERP=$(cat ${pkgs.stdenv.cc}/nix-support/dynamic-linker)
-            LIBS=${nixpkgs.lib.makeLibraryPath (webkitLibs pkgs)}
-            find "$OUT" -type f | while read -r f; do
-              if file -b "$f" | grep -q ELF; then
-                patchelf --set-interpreter "$INTERP" "$f" 2>/dev/null || true
-                patchelf --set-rpath "$LIBS" "$f" || true
-              fi
-            done
-            printf '%s' "$SRC" >"$BUNDLE/.src"
-          fi
-          # Self-healing laufey backend (#44): deno downloads backends into
-          # ~/.cache/deno/laufey/ on first use and version bumps, where the
-          # NixOS stub-ld cannot run them (exit 127). Re-patch any backend
-          # whose interpreter drifted (idempotent, skipped when current).
-          INTERP=$(cat ${pkgs.stdenv.cc}/nix-support/dynamic-linker)
-          LIBS=${nixpkgs.lib.makeLibraryPath (webkitLibs pkgs)}
-          for be in "''${XDG_CACHE_HOME:-$HOME/.cache}"/deno/laufey/*/webview/*/laufey_webview; do
-            [ -e "$be" ] || continue
-            if [ "$(patchelf --print-interpreter "$be" 2>/dev/null)" != "$INTERP" ]; then
-              patchelf --set-interpreter "$INTERP" --set-rpath "$LIBS" "$be"
-            fi
-          done
-          exec "$BIN" "$@"
+      playerLibs = pkgs: with pkgs; [
+        gtk4
+        webkitgtk_6_0
+        libepoxy
+        mpv
+        libGL
+        libglvnd
+        mesa
+        glib-networking
+      ];
+      playerBin = pkgs: pkgs.stdenv.mkDerivation {
+        pname = "stremio-accru-player";
+        version = "0.1.0";
+        src = ./player;
+        nativeBuildInputs = [ pkgs.pkg-config ];
+        buildInputs = playerBuildInputs pkgs;
+        buildPhase = ''
+          bash gen_preload.sh
+          cc -std=c11 -O2 -Wall -o stremio-accru \
+            main.c ipc.c json.c player_mpv.c video.c webview.c \
+            $(pkg-config --cflags --libs gtk4 webkitgtk-6.0 mpv epoxy)
+        '';
+        installPhase = ''
+          mkdir -p $out/bin $out/share/stremio-accru
+          cp stremio-accru $out/bin/
+          cp proxy.js $out/share/stremio-accru/
         '';
       };
-      denoApp = pkgs: {
+      # Wrapper: MangoWM runtime env (WEBKIT_DISABLE_DMABUF_RENDERER,
+      # GIO_EXTRA_MODULES) plus the launcher toolset PATH for the supervised
+      # server and xdg-open. STREMIO_LAUNCHER points at the repo launcher.
+      playerPkg = pkgs: pkgs.writeShellApplication {
+        name = "stremio-accru";
+        runtimeInputs = launcherDeps pkgs ++ playerLibs pkgs;
+        text = ''
+          export WEBKIT_DISABLE_DMABUF_RENDERER=1
+          export GIO_EXTRA_MODULES=${pkgs.glib-networking}/lib/gio/modules''${GIO_EXTRA_MODULES:+:$GIO_EXTRA_MODULES}
+          export STREMIO_LAUNCHER="${./scripts}/stremio-linux.sh"
+          exec "${playerBin pkgs}/bin/stremio-accru" "$@"
+        '';
+      };
+      playerApp = pkgs: {
         type = "app";
-        program = nixpkgs.lib.getExe (denoPkg pkgs);
+        program = nixpkgs.lib.getExe (playerPkg pkgs);
       };
       # Generic-Linux release binary (#56): `deno compile` inside a
       # derivation so tag releases build via `nix build`. Unlike denoPkg
@@ -199,19 +140,11 @@
         in
         {
           default = pkgs.mkShell {
-            packages = (appDeps pkgs) ++ (webkitLibs pkgs) ++ (with pkgs; [
-              # Portable core build deps (mpv client, updater verify)
-              cmake
-              ninja
-              pkg-config
-              openssl
-              nlohmann_json
-              # Future GTK host (#36 proposal): WebKitGTK webview
-              webkitgtk_6_0
-            ]);
+            packages = launcherDeps pkgs ++ playerBuildInputs pkgs
+              ++ (with pkgs; [ pkg-config glib-networking ]);
 
             shellHook = ''
-              export LD_LIBRARY_PATH=${nixpkgs.lib.makeLibraryPath (webkitLibs pkgs)}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+              export LD_LIBRARY_PATH=${nixpkgs.lib.makeLibraryPath (playerLibs pkgs)}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
               export WEBKIT_DISABLE_DMABUF_RENDERER=1
               export GIO_EXTRA_MODULES=${pkgs.glib-networking}/lib/gio/modules''${GIO_EXTRA_MODULES:+:$GIO_EXTRA_MODULES}
               command -v node >/dev/null && command -v mpv >/dev/null \
@@ -225,17 +158,17 @@
         in
         {
           linux = launcherApp pkgs;
-          app = denoApp pkgs;
-          default = denoApp pkgs;
+          app = playerApp pkgs;
+          default = playerApp pkgs;
         });
       packages = forEachSystem (system:
         let
           pkgs = pkgsFor system;
         in
         {
-          stremio-accru = denoPkg pkgs;
+          stremio-accru = playerPkg pkgs;
           stremio-accru-release = releasePkg pkgs;
-          default = denoPkg pkgs;
+          default = playerPkg pkgs;
         });
     };
 }

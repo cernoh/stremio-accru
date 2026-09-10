@@ -14,12 +14,18 @@ Stremio Community on Linux. Upstream `Zaarrg/stremio-community-v5`
   `--streaming-server-disabled`, `--check`, `--help`. Single-instance
   lock. Provisions the server HTTPS cert so the web UI detects the
   server. `scripts/stremio-linux.sh --check` verifies the install.
-- **Standalone desktop app** (`scripts/desktop/main.ts`, #43): Deno
-  desktop window (webview backend) supervising the launcher server.
-  MangoWM needs `WEBKIT_DISABLE_DMABUF_RENDERER=1` and
-  `GIO_EXTRA_MODULES` (set by the wrapper); the wrapper self-heals the
-  downloaded webview backend after re-downloads. Window geometry
-  persists per upstream pattern.
+- **Native desktop player** (`player/`, #58): GTK4/WebKitGTK-6.0 host (C)
+  that plays video with mpv inside the app window. libmpv renders below a
+  transparent webview showing the Stremio UI; the UI drives playback over
+  the shell transport (Qt-WebChannel contract: seek, volume, subs, props,
+  end-of-file), and the seeded `portable_config` (anime4k shaders,
+  thumbfast, input.conf) is loaded via mpv `config-dir`. The UI is served
+  from a local http origin (`player/proxy.js`) so the page can reach the
+  http streaming server (WebKitGTK blocks loopback http from https pages,
+  unlike Chromium). Server/seed stay with the launcher.
+- **Legacy standalone desktop app** (`scripts/desktop/main.ts`, #43):
+  deno webview window; kept for the release workflow's Windows/macOS legs
+  (#46) — on Linux the native player supersedes it.
 - **Tag releases** (`.github/workflows/release.yml`, #46): pushing a
   `v*` tag builds the Linux artifact with nix from the repo flake
   (`nix build .#stremio-accru-release`, #56), compiles Windows/macOS
@@ -58,12 +64,12 @@ Each archive holds the compiled binary plus `stremio-linux.sh` and
 for the streaming server and playback.
 
 NixOS note: release binaries target generic Linux and do not run
-under the NixOS stub-ld. On NixOS use the flake instead (patchelf
-handling stays in `flake.nix`):
+under the NixOS stub-ld. On NixOS use the flake instead (the player host
+and its launcher toolset stay in `flake.nix`):
 
 ```sh
-nix run .#app      # desktop app (default)
-nix run .#linux    # launcher visual run
+nix run .#app      # native desktop player with mpv (default)
+nix run .#linux    # launcher visual run (browser mode)
 nix develop --command scripts/stremio-linux.sh --check
 ```
 
@@ -71,7 +77,10 @@ nix develop --command scripts/stremio-linux.sh --check
 
 ```sh
 nix develop   # or direnv (`use flake` via .envrc)
-deno check scripts/desktop/main.ts
-deno lint scripts/desktop/main.ts
-deno fmt --check scripts/desktop/main.ts
+nix build .#stremio-accru   # builds the native player (player/)
+nix run .#app -- --check    # verify seed/server pieces, then run
 ```
+
+Release archives currently build `scripts/desktop/main.ts` (deno webview)
+for all three OSes via `.github/workflows/release.yml`; issue #56 moves the
+Linux leg to the nix-built native player.
